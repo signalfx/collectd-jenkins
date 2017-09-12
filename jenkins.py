@@ -116,10 +116,9 @@ def ping_check(url, http_timeout):
     Args:
     url (str): The URL to get, including endpoint
     Returns:
-    list: The JSON response
+    bool: The Success or Failure status based on HTTP response
     """
     try:
-        # urllib2.install_opener(opener)
         resp = urllib2.urlopen(url, timeout=http_timeout)
     except (urllib2.HTTPError, urllib2.URLError) as e:
         collectd.error("Error making API call (%s) %s" % (e, url))
@@ -136,8 +135,7 @@ def read_config(conf):
     http_timeout = DEFAULT_API_TIMEOUT
     username = None
     api_token = None
-    none_name = None
-    metrics_key = None 
+    metrics_key = None
     custom_dimensions = {}
     enhanced_metrics = False
     exclude_optional_metrics = set()
@@ -189,7 +187,6 @@ def read_config(conf):
     if metrics_key is None:
         raise ValueError("Missing required config setting: Metrics_Key")
 
-    # Populate the API URLs now that we have the config
     base_url = ("http://%s:%s/" %
                 (plugin_config['Host'], plugin_config['Port']))
 
@@ -254,7 +251,7 @@ def str_to_bool(flag):
     return False
 
 
-def _format_dimensions(module_config, extra_dimensions = None):
+def prepare_plugin_instance(member_id, custom_dimensions, extra_dimensions = None):
     """
     Formats a dictionary of dimensions to a format that enables them to be
     specified as key, value pairs in plugin_instance to signalfx. E.g.
@@ -262,14 +259,16 @@ def _format_dimensions(module_config, extra_dimensions = None):
     _format_dimensions(dimensions)
     "[a=foo,b=bar]"
     Args:
-    dimensions (dict): Mapping of {dimension_name: value, ...}
+    member_id: Unique id for each instance
+    custom_dimensions (dict): Mapping of {dimension_name: value, ...} asked by user
+    extra_dimensions (dict): Mapping of {dimension_name: value, ...} for jobs
     Returns:
-    str: Comma-separated list of dimensions
+    str: member_id[Comma-separated list of dimensions]
     """
     dim_pairs = []
     
 
-    dim_pairs.extend("%s=%s" % (k, v) for k, v in module_config['custom_dimensions'].iteritems())
+    dim_pairs.extend("%s=%s" % (k, v) for k, v in custom_dimensions.iteritems())
 
     if extra_dimensions is not None:
         dim_pairs.extend("%s=%s" % (k, v) for k, v in extra_dimensions.iteritems() )
@@ -278,11 +277,11 @@ def _format_dimensions(module_config, extra_dimensions = None):
 
 
     if not dim_str:
-        return "%s" % (module_config['member_id'])
+        return "%s" % (member_id)
 
-    return "%s[%s]" % (module_config['member_id'],dim_str)
+    return "%s[%s]" % (member_id,dim_str)
 
-def prepare_and_dispatch_metric(module_config,name, value, _type, extra_dimensions = None):
+def prepare_and_dispatch_metric(module_config, name, value, _type, extra_dimensions = None):
     '''
     Prepares and dispatches a metric
     '''
@@ -290,7 +289,7 @@ def prepare_and_dispatch_metric(module_config,name, value, _type, extra_dimensio
     data_point.type_instance = name
     data_point.type = _type
     
-    data_point.plugin_instance = _format_dimensions(module_config,extra_dimensions)
+    data_point.plugin_instance = prepare_plugin_instance(module_config['member_id'],module_config['custom_dimensions'],extra_dimensions)
 
     data_point.values = [value]
 
@@ -314,6 +313,9 @@ def prepare_and_dispatch_metric(module_config,name, value, _type, extra_dimensio
 
 
 def read_and_post_job_metrics(module_config, url, job_name, last_timestamp):
+    '''
+    Reads json for a job and dispatches job related metrics
+    '''
 
     global jobs_last_timestamp
 
@@ -323,8 +325,13 @@ def read_and_post_job_metrics(module_config, url, job_name, last_timestamp):
     if resp_obj and resp_obj['builds']:
         for i in xrange(len(resp_obj['builds'])):           
             resp = get_response(resp_obj['builds'][i]['url'],'jenkins',module_config)
-            build_timestamp = resp['timestamp']+resp['duration']
+
+            # Dispatch metrics only if build has completed
             if resp and not resp['building']:
+                build_timestamp = resp['timestamp']+resp['duration']
+
+                # Dispatch metrics only if the timestamp is greater than that of
+                # last metric sent else break as everything before it is already sent
                 if build_timestamp > last_timestamp:
                     if jobs_last_timestamp[job_name] < build_timestamp:
                         jobs_last_timestamp[job_name] = build_timestamp
@@ -354,6 +361,10 @@ def read_and_post_job_metrics(module_config, url, job_name, last_timestamp):
 
 
 def parse_and_post_metrics(module_config,resp):
+    '''
+    Read resposne and dispatch dropwizard metrics
+    '''
+
     for key in NODE_METRICS:
         if key in resp:
             prepare_and_dispatch_metric(
@@ -374,6 +385,8 @@ def parse_and_post_metrics(module_config,resp):
     # if the bool is true, then exclude metrics that are not required
     if module_config['enhanced_metrics']:
         for metric in resp:
+
+            # metrics contains string and list as well which are not valid, hence skip
             if metric in module_config['exclude_optional_metrics'] or type(resp[metric]['value']) is str or type(resp[metric]['value']) is unicode or type(resp[metric]['value']) is list:
                 continue
 
@@ -397,6 +410,10 @@ def parse_and_post_metrics(module_config,resp):
                 )
 
 def parse_and_post_healthcheck(module_config,resp):
+    '''
+    Reads response and dispatches dropwizard healthcheck metrics
+    '''
+
     for key in HEALTH_METRICS:
         if key in resp:
             prepare_and_dispatch_metric(
@@ -429,6 +446,10 @@ def report_slave_status(module_config, slaves_data):
                 )
 
 def get_response(url, api_type, module_config):
+    '''
+    Prepare endpoint URL and get response
+    '''
+
     extension = None
     resp_obj = None
 
