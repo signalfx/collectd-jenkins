@@ -324,30 +324,33 @@ def read_and_post_job_metrics(module_config, url, job_name, last_timestamp):
         for i in xrange(len(resp_obj['builds'])):           
             resp = get_response(resp_obj['builds'][i]['url'],'jenkins',module_config)
             build_timestamp = resp['timestamp']+resp['duration']
-            if resp and not resp['building'] and build_timestamp > last_timestamp:
-                if jobs_last_timestamp[job_name] < build_timestamp:
-                    jobs_last_timestamp[job_name] = build_timestamp
+            if resp and not resp['building']:
+                if build_timestamp > last_timestamp:
+                    if jobs_last_timestamp[job_name] < build_timestamp:
+                        jobs_last_timestamp[job_name] = build_timestamp
 
 
-                extra_dimensions['Result'] = resp['result']
+                    extra_dimensions['Result'] = resp['result']
 
-                for key in JOB_METRICS:
-                    if key in resp:
-                        prepare_and_dispatch_metric(
-                            module_config,
-                            JOB_METRICS[key].name,
-                            resp[key],
-                            JOB_METRICS[key].type,
-                            extra_dimensions
-                        )
-                    else:
-                        prepare_and_dispatch_metric(
-                            module_config,
-                            JOB_METRICS[key].name,
-                            0,
-                            JOB_METRICS[key].type,
-                            extra_dimensions
-                        )
+                    for key in JOB_METRICS:
+                        if key in resp:
+                            prepare_and_dispatch_metric(
+                                module_config,
+                                JOB_METRICS[key].name,
+                                resp[key],
+                                JOB_METRICS[key].type,
+                                extra_dimensions
+                            )
+                        else:
+                            prepare_and_dispatch_metric(
+                                module_config,
+                                JOB_METRICS[key].name,
+                                0,
+                                JOB_METRICS[key].type,
+                                extra_dimensions
+                            )
+                else:
+                    break
 
 
 def parse_and_post_metrics(module_config,resp):
