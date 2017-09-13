@@ -13,7 +13,7 @@ A jenkins collectd plugin which users can use to send metrics from jenkins insta
 
 * collectd 4.9 or later (for the Python plugin)
 * Python 2.6 or later
-* Jenkins 1.580 or later
+* Jenkins 1.580.3 or later
 * Metrics Plugin latest
 
 ## Configuration
