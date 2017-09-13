@@ -110,7 +110,7 @@ def _api_call(url, opener, http_timeout):
         collectd.error("Error parsing JSON for API call (%s) %s" % (e, url))
         return None
 
-def ping_check(url, http_timeout):
+def ping_check(url, opener, http_timeout):
     """
     Makes a REST call against Jenkins to get alive status.
     Args:
@@ -119,6 +119,7 @@ def ping_check(url, http_timeout):
     bool: The Success or Failure status based on HTTP response
     """
     try:
+        urllib2.install_opener(opener)
         resp = urllib2.urlopen(url, timeout=http_timeout)
     except (urllib2.HTTPError, urllib2.URLError) as e:
         collectd.error("Error making API call (%s) %s" % (e, url))
@@ -466,9 +467,9 @@ def get_response(url, api_type, module_config):
     collectd.debug('GET ' + api_url)
 
     if api_type == 'ping':
-        resp_obj = ping_check(api_url, module_config['http_timeout'])
+        resp_obj = ping_check(api_url, module_config['opener'], module_config['http_timeout'])
     else:
-        resp_obj = _api_call(api_url, module_config['opener'],module_config['http_timeout'])
+        resp_obj = _api_call(api_url, module_config['opener'], module_config['http_timeout'])
 
     return resp_obj
 
