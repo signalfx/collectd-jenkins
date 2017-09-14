@@ -5,7 +5,7 @@ A jenkins collectd plugin which users can use to send metrics from jenkins insta
 ## Installation
 
 * Checkout this repository somewhere on your system accessible by collectd. The suggested location is `/usr/share/collectd/`
-* Install the Metrics Plugin in Jenkins. Manage Jenkins > Manage Plugins > Available > Search "Metrics Plugin"
+* Install the Metrics Plugin in Jenkins. `Manage Jenkins > Manage Plugins > Available > Search "Metrics Plugin"`
 * Configure the plugin (see below)
 * Restart collectd
 
@@ -22,24 +22,25 @@ The following are required configuration keys:
 
 * Host - Required. Hostname or IP address of the etcd member, default is 'localhost'
 * Port - Required. The port of the jenkins instance, default is '8080'
-* MetricsKey - Required. The access key from Manage Jenkins > Configure System > Metrics > Key. If empty, click Generate
+* MetricsKey - Required. The access key from `Manage Jenkins > Configure System > Metrics > ADD`. If empty, click Generate
 
 
 Optional configurations keys include:
 
 * Interval - Interval between metric calls. Default is 60s
 * Username - user id with access, if any. Username will require APIToken too
-* APIToken - API token from the system configuration in Jenkins. Username > Configure > API Token > Show API Token
-* EnhancedMetrics - Flag to specify whether advanced stats from the /metrics/<api_key>/metrics endpoint are needed. Default is False
-* IncludeMetric - Advanced Metrics from the /metrics/<api_key>/metrics endpoint can be included individually
-* ExcludeMetric - Advanced Metrics from the /metrics/<api_key>/metrics endpoint can be excluded individually
+* APIToken - API token from the system configuration in Jenkins. `Username > Configure > API Token > Show API Token`
+* EnhancedMetrics - Flag to specify whether advanced stats from the `/metrics/<api_key>/metrics` endpoint are needed. Default is False
+* IncludeMetric - Advanced Metrics from the `/metrics/<api_key>/metrics` endpoint can be included individually
+* ExcludeMetric - Advanced Metrics from the `/metrics/<api_key>/metrics` endpoint can be excluded individually
 * Dimension - Add extra dimensions to your metrics
 
-From /metrics/<api_key>/metrics only the metrics in gauges can be selected which have only number as value. Rest are ignored. 
+From `/metrics/<api_key>/metrics` only the metrics in gauges can be selected which have only number as value. Rest are ignored. Check out `https://wiki.jenkins.io/display/JENKINS/Metrics+Plugin` for description of the metrics.
 
 Note that multiple jenkins instances can be configured in the same file.
 
-```LoadPlugin python
+```
+LoadPlugin python
 <Plugin python>
     ModulePath "/usr/share/collectd/collectd-etcd"
     Import jenkins
