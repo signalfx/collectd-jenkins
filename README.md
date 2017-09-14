@@ -30,19 +30,19 @@ Optional configurations keys include:
 * Interval - Interval between metric calls. Default is 60s
 * Username - user id with access, if any. Username will require APIToken too
 * APIToken - API token from the system configuration in Jenkins. `Username > Configure > API Token > Show API Token`
-* EnhancedMetrics - Flag to specify whether advanced stats from the `/metrics/<api_key>/metrics` endpoint are needed. Default is False
-* IncludeMetric - Advanced Metrics from the `/metrics/<api_key>/metrics` endpoint can be included individually
-* ExcludeMetric - Advanced Metrics from the `/metrics/<api_key>/metrics` endpoint can be excluded individually
+* EnhancedMetrics - Flag to specify whether advanced stats from the `/metrics/<MetricsKey>/metrics` endpoint are needed. Default is False
+* IncludeMetric - Advanced Metrics from the `/metrics/<MetricsKey>/metrics` endpoint can be included individually
+* ExcludeMetric - Advanced Metrics from the `/metrics/<MetricsKey>/metrics` endpoint can be excluded individually
 * Dimension - Add extra dimensions to your metrics
 
-From `/metrics/<api_key>/metrics` only the metrics in gauges can be selected which have only number as value. Rest are ignored. Check out `https://wiki.jenkins.io/display/JENKINS/Metrics+Plugin` for description of the metrics.
+From `/metrics/<MetricsKey>/metrics` only the metrics in gauges can be selected which have only number as value. Rest are ignored. Check out `https://wiki.jenkins.io/display/JENKINS/Metrics+Plugin` for description of the metrics.
 
 Note that multiple jenkins instances can be configured in the same file.
 
 ```
 LoadPlugin python
 <Plugin python>
-    ModulePath "/usr/share/collectd/collectd-etcd"
+    ModulePath "/usr/share/collectd/collectd-jenkins"
     Import jenkins
     <Module jenkins>
         Host "localhost"
