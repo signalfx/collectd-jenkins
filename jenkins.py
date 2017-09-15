@@ -123,9 +123,14 @@ def ping_check(url, opener, http_timeout):
         resp = urllib2.urlopen(url, timeout=http_timeout)
     except (urllib2.HTTPError, urllib2.URLError) as e:
         collectd.error("Error making API call (%s) %s" % (e, url))
-        return False
-    else:
+        return None
+
+    val = resp.read().strip()
+
+    if val == "pong":
         return True
+    else:
+        return False
 
 def read_config(conf):
     '''
@@ -484,12 +489,15 @@ def read_metrics(module_config):
     
     alive = get_response(module_config['base_url'],'ping',module_config)
 
-    prepare_and_dispatch_metric(
-        module_config,
-        NODE_STATUS_METRICS['ping'].name,
-        alive,
-        NODE_STATUS_METRICS['ping'].type
-    )
+    if alive is None:
+        collectd.error('Unable to get data from jenkins node')
+    else:
+        prepare_and_dispatch_metric(
+            module_config,
+            NODE_STATUS_METRICS['ping'].name,
+            alive,
+            NODE_STATUS_METRICS['ping'].type
+        )
 
     resp_obj = get_response(module_config['base_url'],'computer',module_config)
 
