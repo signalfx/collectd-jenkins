@@ -1,82 +1,82 @@
 #!/usr/bin/env python
 # Copyright (C) 2017 SignalFx, Inc.
 
-import json
-import pprint
-import urllib2
 import base64
 import collections
+import json
+import pprint
 import time
+import urllib2
 
 import collectd
 
 PLUGIN_NAME = 'jenkins'
-DEFAULT_INTERVAL = 60
+DEFAULT_INTERVAL = 10
 DEFAULT_API_TIMEOUT = 60
-
-
-
-jobs_last_timestamp = {}
 
 
 Metric = collections.namedtuple('Metric', ('name', 'type'))
 
 JOB_METRICS = {
-    'duration' :
-            Metric('jenkins.job.duration','gauge'),
+    'duration':
+            Metric('jenkins.job.duration', 'gauge'),
 }
 
 NODE_METRICS = {
-    'vm.memory.total.used' :
-            Metric('jenkins.node.vm.memory.total.used','gauge'),
-    'vm.memory.heap.usage' :
-            Metric('jenkins.node.vm.memory.heap.usage','gauge'),
-    'vm.memory.non-heap.used' :
-            Metric('jenkins.node.vm.memory.non-heap.used','gauge'),
-    'jenkins.queue.size.value' :
-            Metric('jenkins.node.queue.size.value','gauge'),
-    'jenkins.health-check.score' :
-            Metric('jenkins.node.health-check.score','gauge'),
-    'jenkins.executor.count.value' :
-            Metric('jenkins.node.executor.count.value','gauge'),
-    'jenkins.executor.in-use.value' :
-            Metric('jenkins.node.executor.in-use.value','gauge')
+    'vm.memory.total.used':
+            Metric('jenkins.node.vm.memory.total.used', 'gauge'),
+    'vm.memory.heap.usage':
+            Metric('jenkins.node.vm.memory.heap.usage', 'gauge'),
+    'vm.memory.non-heap.used':
+            Metric('jenkins.node.vm.memory.non-heap.used', 'gauge'),
+    'jenkins.queue.size.value':
+            Metric('jenkins.node.queue.size.value', 'gauge'),
+    'jenkins.health-check.score':
+            Metric('jenkins.node.health-check.score', 'gauge'),
+    'jenkins.executor.count.value':
+            Metric('jenkins.node.executor.count.value', 'gauge'),
+    'jenkins.executor.in-use.value':
+            Metric('jenkins.node.executor.in-use.value', 'gauge')
 }
 
 
 HEALTH_METRICS = {
-    'disk-space' :
-            Metric('jenkins.node.health.disk.space','gauge'),
-    'temporary-space' :
-            Metric('jenkins.node.health.temporary.space','gauge'),
-    'plugins' :
-            Metric('jenkins.node.health.plugins','gauge'),
-    'thread-deadlock' :
-            Metric('jenkins.node.health.thread-deadlock','gauge')
+    'disk-space':
+            Metric('jenkins.node.health.disk.space', 'gauge'),
+    'temporary-space':
+            Metric('jenkins.node.health.temporary.space', 'gauge'),
+    'plugins':
+            Metric('jenkins.node.health.plugins', 'gauge'),
+    'thread-deadlock':
+            Metric('jenkins.node.health.thread-deadlock', 'gauge')
 }
 
 NODE_STATUS_METRICS = {
-    'ping' :
-            Metric('jenkins.node.online.status','gauge')
+    'ping':
+            Metric('jenkins.node.online.status', 'gauge')
 }
 
 SLAVE_STATUS_METRICS = {
-    'offline' :
-            Metric('jenkins.node.slave.online.status','gauge')
+    'offline':
+            Metric('jenkins.node.slave.online.status', 'gauge')
 }
 
-# Jenkins does not send a 401 error code for retry and 403 Forbidden is sent. https://wiki.jenkins.io/display/JENKINS/Authenticating+scripted+clients
-# In urllib2 there is no preemptive authorization handling. This has been solved for python 3.5+.
-# The below class is an implementation suggested in a patch for urllib2 https://bugs.python.org/file36344/fix-issue19494-py27.patch
-# https://bugs.python.org/issue19494
 
 class HTTPBasicPriorAuthHandler(urllib2.HTTPBasicAuthHandler):
-    '''Preemptive basic auth.
+    """
+    Preemptive basic auth.
 
     Instead of waiting for a 403 to then retry with the credentials,
     send the credentials if the url is handled by the password manager.
-    Note: please use realm=None when calling add_password.'''
-    
+    Note: please use realm=None when calling add_password.
+    """
+
+    # Jenkins does not send a 401 error code for retry and 403 Forbidden is sent.
+    # https://wiki.jenkins.io/display/JENKINS/Authenticating+scripted+clients
+    # In urllib2 there is no preemptive authorization handling. This has been solved for python 3.5+.
+    # The below class is an implementation suggested in a patch for urllib2
+    # https://bugs.python.org/file36344/fix-issue19494-py27.patch
+    # https://bugs.python.org/issue19494
     def http_request(self, req):
         if not req.has_header('Authorization'):
             user, passwd = self.passwd.find_user_password(None, req.host)
@@ -87,7 +87,6 @@ class HTTPBasicPriorAuthHandler(urllib2.HTTPBasicAuthHandler):
         return req
 
     https_request = http_request
-
 
 
 def _api_call(url, opener, http_timeout):
@@ -109,6 +108,7 @@ def _api_call(url, opener, http_timeout):
     except ValueError, e:
         collectd.error("Error parsing JSON for API call (%s) %s" % (e, url))
         return None
+
 
 def ping_check(url, opener, http_timeout):
     """
@@ -132,114 +132,100 @@ def ping_check(url, opener, http_timeout):
     else:
         return False
 
+
 def read_config(conf):
     '''
     Reads the configurations provided by the user
     '''
-    plugin_config = {}
-    interval = DEFAULT_INTERVAL
-    http_timeout = DEFAULT_API_TIMEOUT
-    username = None
-    api_token = None
-    metrics_key = None
-    custom_dimensions = {}
-    enhanced_metrics = False
-    exclude_optional_metrics = set()
-    include_optional_metrics = set()
+    module_config = {
+        'member_id': None,
+        'plugin_config': {},
+        'interval': DEFAULT_INTERVAL,
+        'username': None,
+        'api_token': None,
+        'opener': None,
+        'metrics_key': None,
+        'custom_dimensions': {},
+        'enhanced_metrics': False,
+        'include_optional_metrics': set(),
+        'exclude_optional_metrics': set(),
+        'http_timeout': DEFAULT_API_TIMEOUT,
+        'jobs_last_timestamp': {}
+    }
 
     testing = False
 
     required_keys = ('Host', 'Port')
     auth_keys = ('Username', 'APIToken', 'MetricsKey')
 
-
     for val in conf.children:
         if val.key in required_keys:
-            plugin_config[val.key] = val.values[0]
+            module_config['plugin_config'][val.key] = val.values[0]
         elif val.key == 'Interval' and val.values[0]:
-            interval = val.values[0]
+            module_config['interval'] = val.values[0]
         elif val.key in auth_keys and val.key == 'Username' and \
                 val.values[0]:
-            username = val.values[0]
+            module_config['username'] = val.values[0]
         elif val.key in auth_keys and val.key == 'APIToken' and \
                 val.values[0]:
-            api_token = val.values[0]
+            module_config['api_token'] = val.values[0]
         elif val.key in auth_keys and val.key == 'MetricsKey' and \
                 val.values[0]:
-            metrics_key = val.values[0]
+            module_config['metrics_key'] = val.values[0]
         elif val.key == 'Dimension':
             if len(val.values) == 2:
-                custom_dimensions.update({val.values[0]: val.values[1]})
+                module_config['custom_dimensions'].update({val.values[0]: val.values[1]})
             else:
-                collectd.warning("WARNING: Check configuration \
-                                            setting for %s" % val.key)
+                collectd.warning("WARNING: Dimension Key Value format required")
         elif val.key == 'EnhancedMetrics' and val.values[0]:
-            enhanced_metrics = str_to_bool(val.values[0])
+            module_config['enhanced_metrics'] = str_to_bool(val.values[0])
         elif val.key == 'IncludeMetric' and val.values[0] and val.values[0] not in NODE_METRICS:
-            include_optional_metrics.add(val.values[0])
+            module_config['include_optional_metrics'].add(val.values[0])
         elif val.key == 'ExcludeMetric' and val.values[0] and val.values[0] not in NODE_METRICS:
-            exclude_optional_metrics.add(val.values[0])
+            module_config['exclude_optional_metrics'].add(val.values[0])
         elif val.key == 'Testing' and str_to_bool(val.values[0]):
             testing = True
 
     # Make sure all required config settings are present, and log them
     collectd.info("Using config settings:")
     for key in required_keys:
-        val = plugin_config.get(key)
+        val = module_config['plugin_config'].get(key)
         if val is None:
             raise ValueError("Missing required config setting: %s" % key)
         collectd.info("%s=%s" % (key, val))
 
-    if metrics_key is None:
+    if module_config['metrics_key'] is None:
         raise ValueError("Missing required config setting: Metrics_Key")
 
-    base_url = ("http://%s:%s/" %
-                (plugin_config['Host'], plugin_config['Port']))
+    module_config['member_id'] = ("%s:%s" % (
+        module_config['plugin_config']['Host'], module_config['plugin_config']['Port']))
 
+    module_config['base_url'] = ("http://%s:%s/" %
+                                 (module_config['plugin_config']['Host'], module_config['plugin_config']['Port']))
 
-    if username is None and api_token is None:
-        username = api_token = ''
+    if module_config['username'] is None and module_config['api_token'] is None:
+        module_config['username'] = module_config['api_token'] = ''
     collectd.info("Using username '%s' and api_token '%s' " % (
-        username, api_token))
+        module_config['username'], module_config['api_token']))
 
     auth_handler = HTTPBasicPriorAuthHandler()
     auth_handler.add_password(realm=None,
-                            uri=base_url,
-                            user=username,
-                            passwd=api_token)
-    opener = urllib2.build_opener(auth_handler)
-
-    module_config = {
-        'member_id': ("%s:%s" % (
-                plugin_config['Host'], plugin_config['Port'])),
-        'plugin_config': plugin_config,
-        'interval': interval,
-        'username': username,
-        'api_token': api_token,
-        'opener': opener,
-        'base_url': base_url,
-        'metrics_key': metrics_key,
-        'custom_dimensions': custom_dimensions,
-        'enhanced_metrics': enhanced_metrics,
-        'include_optional_metrics': include_optional_metrics,
-        'exclude_optional_metrics': exclude_optional_metrics,
-        'http_timeout': http_timeout
-    }
-
+                              uri=module_config['base_url'],
+                              user=module_config['username'],
+                              passwd=module_config['api_token'])
+    module_config['opener'] = urllib2.build_opener(auth_handler)
 
     collectd.debug("module_config: (%s)" % str(module_config))
-
 
     if testing:
         # for testing purposes
         return module_config
 
-
     collectd.register_read(
-                            read_metrics,
-                            interval,
-                            data=module_config,
-                            name=module_config['member_id']
+        read_metrics,
+        module_config['interval'],
+        data=module_config,
+        name=module_config['member_id']
     )
 
 
@@ -257,7 +243,7 @@ def str_to_bool(flag):
     return False
 
 
-def prepare_plugin_instance(member_id, custom_dimensions, extra_dimensions = None):
+def prepare_plugin_instance(member_id, custom_dimensions, extra_dimensions=None):
     """
     Formats a dictionary of dimensions to a format that enables them to be
     specified as key, value pairs in plugin_instance to signalfx. E.g.
@@ -272,30 +258,30 @@ def prepare_plugin_instance(member_id, custom_dimensions, extra_dimensions = Non
     str: member_id[Comma-separated list of dimensions]
     """
     dim_pairs = []
-    
 
     dim_pairs.extend("%s=%s" % (k, v) for k, v in custom_dimensions.iteritems())
 
     if extra_dimensions is not None:
-        dim_pairs.extend("%s=%s" % (k, v) for k, v in extra_dimensions.iteritems() )
+        dim_pairs.extend("%s=%s" % (k, v) for k, v in extra_dimensions.iteritems())
 
     dim_str = ",".join(dim_pairs)
-
 
     if not dim_str:
         return "%s" % (member_id)
 
-    return "%s[%s]" % (member_id,dim_str)
+    return "%s[%s]" % (member_id, dim_str)
 
-def prepare_and_dispatch_metric(module_config, name, value, _type, extra_dimensions = None):
+
+def prepare_and_dispatch_metric(module_config, name, value, _type, extra_dimensions=None):
     '''
     Prepares and dispatches a metric
     '''
     data_point = collectd.Values(plugin=PLUGIN_NAME)
     data_point.type_instance = name
     data_point.type = _type
-    
-    data_point.plugin_instance = prepare_plugin_instance(module_config['member_id'],module_config['custom_dimensions'],extra_dimensions)
+
+    data_point.plugin_instance = prepare_plugin_instance(module_config['member_id'], module_config['custom_dimensions'],
+                                                         extra_dimensions)
 
     data_point.values = [value]
 
@@ -306,13 +292,13 @@ def prepare_and_dispatch_metric(module_config, name, value, _type, extra_dimensi
     data_point.meta = {'0': True}
 
     pprint_dict = {
-            'plugin': data_point.plugin,
-            'plugin_instance': data_point.plugin_instance,
-            'type': data_point.type,
-            'type_instance': data_point.type_instance,
-            'values': data_point.values,
-            'interval': module_config['interval']
-            }
+        'plugin': data_point.plugin,
+        'plugin_instance': data_point.plugin_instance,
+        'type': data_point.type,
+        'type_instance': data_point.type_instance,
+        'values': data_point.values,
+        'interval': module_config['interval']
+    }
     collectd.debug(pprint.pformat(pprint_dict))
 
     data_point.dispatch()
@@ -322,26 +308,22 @@ def read_and_post_job_metrics(module_config, url, job_name, last_timestamp):
     '''
     Reads json for a job and dispatches job related metrics
     '''
-
-    global jobs_last_timestamp
-
-    resp_obj = get_response(url,'jenkins',module_config)
+    resp_obj = get_response(url, 'jenkins', module_config)
     extra_dimensions = {}
     extra_dimensions['Job'] = job_name
     if resp_obj and resp_obj['builds']:
-        for i in xrange(len(resp_obj['builds'])):           
-            resp = get_response(resp_obj['builds'][i]['url'],'jenkins',module_config)
+        for i in xrange(len(resp_obj['builds'])):
+            resp = get_response(resp_obj['builds'][i]['url'], 'jenkins', module_config)
 
             # Dispatch metrics only if build has completed
             if resp and not resp['building']:
-                build_timestamp = resp['timestamp']+resp['duration']
+                build_timestamp = resp['timestamp'] + resp['duration']
 
                 # Dispatch metrics only if the timestamp is greater than that of
                 # last metric sent else break as everything before it is already sent
                 if build_timestamp > last_timestamp:
-                    if jobs_last_timestamp[job_name] < build_timestamp:
-                        jobs_last_timestamp[job_name] = build_timestamp
-
+                    if module_config['jobs_last_timestamp'][job_name] < build_timestamp:
+                        module_config['jobs_last_timestamp'][job_name] = build_timestamp
 
                     extra_dimensions['Result'] = resp['result']
 
@@ -366,7 +348,7 @@ def read_and_post_job_metrics(module_config, url, job_name, last_timestamp):
                     break
 
 
-def parse_and_post_metrics(module_config,resp):
+def parse_and_post_metrics(module_config, resp):
     '''
     Read resposne and dispatch dropwizard metrics
     '''
@@ -387,13 +369,13 @@ def parse_and_post_metrics(module_config,resp):
                 NODE_METRICS[key].type,
             )
 
-
     # if the bool is true, then exclude metrics that are not required
     if module_config['enhanced_metrics']:
         for metric in resp:
 
             # metrics contains string and list as well which are not valid, hence skip
-            if metric in module_config['exclude_optional_metrics'] or type(resp[metric]['value']) is str or type(resp[metric]['value']) is unicode or type(resp[metric]['value']) is list:
+            if metric in module_config['exclude_optional_metrics'] or type(resp[metric]['value']) is str or \
+                    type(resp[metric]['value']) is unicode or type(resp[metric]['value']) is list:
                 continue
 
             prepare_and_dispatch_metric(
@@ -405,9 +387,8 @@ def parse_and_post_metrics(module_config,resp):
     else:
         # include only the required metrics
         for metric in module_config['include_optional_metrics']:
-            if metric in resp and not (type(resp[metric]['value']) is str or type(resp[metric]['value']) is unicode
-                or type(resp[metric]['value']) is list):
-        
+            if metric in resp and not (type(resp[metric]['value']) is str or type(resp[metric]['value']) is unicode or
+                                       type(resp[metric]['value']) is list):
                 prepare_and_dispatch_metric(
                     module_config,
                     metric,
@@ -415,7 +396,8 @@ def parse_and_post_metrics(module_config,resp):
                     'gauge',
                 )
 
-def parse_and_post_healthcheck(module_config,resp):
+
+def parse_and_post_healthcheck(module_config, resp):
     '''
     Reads response and dispatches dropwizard healthcheck metrics
     '''
@@ -451,6 +433,7 @@ def report_slave_status(module_config, slaves_data):
                     extra_dimensions
                 )
 
+
 def get_response(url, api_type, module_config):
     '''
     Prepare endpoint URL and get response
@@ -466,15 +449,18 @@ def get_response(url, api_type, module_config):
     elif api_type == 'computer':
         extension = 'computer/api/json/'
     else:
-        extension = 'metrics/%s/%s/' % (key,api_type)
+        extension = 'metrics/%s/%s/' % (key, api_type)
 
-    api_url = '%s%s' % (url,extension)
+    api_url = '%s%s' % (url, extension)
     collectd.debug('GET ' + api_url)
 
     if api_type == 'ping':
         resp_obj = ping_check(api_url, module_config['opener'], module_config['http_timeout'])
     else:
         resp_obj = _api_call(api_url, module_config['opener'], module_config['http_timeout'])
+
+    if resp_obj is None:
+        collectd.error('Unable to get data from jenkins node')
 
     return resp_obj
 
@@ -486,12 +472,9 @@ def read_metrics(module_config):
     '''
     collectd.debug('Executing read_metrics callback')
 
-    
-    alive = get_response(module_config['base_url'],'ping',module_config)
+    alive = get_response(module_config['base_url'], 'ping', module_config)
 
-    if alive is None:
-        collectd.error('Unable to get data from jenkins node')
-    else:
+    if alive is not None:
         prepare_and_dispatch_metric(
             module_config,
             NODE_STATUS_METRICS['ping'].name,
@@ -499,45 +482,33 @@ def read_metrics(module_config):
             NODE_STATUS_METRICS['ping'].type
         )
 
-    resp_obj = get_response(module_config['base_url'],'computer',module_config)
+    resp_obj = get_response(module_config['base_url'], 'computer', module_config)
 
-    if resp_obj is None:
-        collectd.error('Unable to get data from jenkins node')
-    else:
-        print resp_obj
-        report_slave_status(module_config,resp_obj['computer'])
+    if resp_obj is not None:
+        report_slave_status(module_config, resp_obj['computer'])
 
-    resp_obj = get_response(module_config['base_url'],'metrics',module_config)
+    resp_obj = get_response(module_config['base_url'], 'metrics', module_config)
 
-    if resp_obj is None:
-        collectd.error('Unable to get data from jenkins node')
-    else:
-        parse_and_post_metrics(module_config,resp_obj['gauges'])
+    if resp_obj is not None:
+        parse_and_post_metrics(module_config, resp_obj['gauges'])
 
-   
-    resp_obj = get_response(module_config['base_url'],'healthcheck',module_config)
+    resp_obj = get_response(module_config['base_url'], 'healthcheck', module_config)
 
-    if resp_obj is None:
-        collectd.error('Unable to get data from jenkins node')
-    else:
-        parse_and_post_healthcheck(module_config,resp_obj)
+    if resp_obj is not None:
+        parse_and_post_healthcheck(module_config, resp_obj)
 
-    resp_obj = get_response(module_config['base_url'],'jenkins',module_config)
+    resp_obj = get_response(module_config['base_url'], 'jenkins', module_config)
 
-
-    if resp_obj is None:
-        collectd.error('Unable to get data from jenkins node')
-    else:
-        global jobs_last_timestamp
+    if resp_obj is not None:
         if "jobs" in resp_obj and resp_obj['jobs']:
             jobs_data = resp_obj['jobs']
             for job in jobs_data:
-                if job['name'] in jobs_last_timestamp:
-                    last_timestamp = jobs_last_timestamp[job['name']]
+                if job['name'] in module_config['jobs_last_timestamp']:
+                    last_timestamp = module_config['jobs_last_timestamp'][job['name']]
                 else:
-                    last_timestamp = int(time.time()*1000) - (module_config['interval']*1000)
-                    jobs_last_timestamp[job['name']] = last_timestamp
-                read_and_post_job_metrics(module_config,job['url'], job['name'],last_timestamp)
+                    last_timestamp = int(time.time() * 1000) - (module_config['interval'] * 1000)
+                    module_config['jobs_last_timestamp'][job['name']] = last_timestamp
+                read_and_post_job_metrics(module_config, job['url'], job['name'], last_timestamp)
 
 
 def init():
@@ -554,8 +525,6 @@ def shutdown():
     collectd.info("Stopping jenkins plugin")
 
 
-
-
 def setup_collectd():
     """
     Registers callback functions with collectd
@@ -563,5 +532,6 @@ def setup_collectd():
     collectd.register_init(init)
     collectd.register_config(read_config)
     collectd.register_shutdown(shutdown)
+
 
 setup_collectd()

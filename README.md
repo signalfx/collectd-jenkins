@@ -1,6 +1,6 @@
 # collectd jenkins Plugin
 
-A jenkins collectd plugin which users can use to send metrics from jenkins instances to SignalFx
+A Jenkins collectd plugin which users can use to send metrics from jenkins instances to SignalFx
 
 ## Installation
 
@@ -14,7 +14,7 @@ A jenkins collectd plugin which users can use to send metrics from jenkins insta
 * collectd 4.9 or later (for the Python plugin)
 * Python 2.6 or later
 * Jenkins 1.580.3 or later
-* Metrics Plugin latest
+* `Metrics Plugin`(see installation steps)
 
 ## Configuration
 
@@ -27,7 +27,7 @@ The following are required configuration keys:
 
 Optional configurations keys include:
 
-* Interval - Interval between metric calls. Default is 60s
+* Interval - Interval between metric calls. Default is 10s
 * Username - user id with access, if any. Username will require APIToken too
 * APIToken - API token from the system configuration in Jenkins. `Username > Configure > API Token > Show API Token`
 * EnhancedMetrics - Flag to specify whether advanced stats from the `/metrics/<MetricsKey>/metrics` endpoint are needed. Default is False
@@ -35,9 +35,9 @@ Optional configurations keys include:
 * ExcludeMetric - Advanced Metrics from the `/metrics/<MetricsKey>/metrics` endpoint can be excluded individually
 * Dimension - Add extra dimensions to your metrics
 
-From `/metrics/<MetricsKey>/metrics` only the metrics in gauges can be selected which have only number as value. Rest are ignored. Check out `https://wiki.jenkins.io/display/JENKINS/Metrics+Plugin` for description of the metrics.
+From `/metrics/<MetricsKey>/metrics` only the metrics inside `gauges` key are representable, if the value is a number. Metrics of type `histograms`, `meter` and `timer` will be skipped over. Check out `https://wiki.jenkins.io/display/JENKINS/Metrics+Plugin` for description of the metrics.
 
-Note that multiple jenkins instances can be configured in the same file.
+Note that multiple Jenkins instances can be configured in the same file.
 
 ```
 LoadPlugin python
