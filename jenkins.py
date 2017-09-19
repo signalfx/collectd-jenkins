@@ -140,7 +140,7 @@ def read_config(conf):
     module_config = {
         'member_id': None,
         'plugin_config': {},
-        'interval': DEFAULT_INTERVAL,
+        'interval': None,
         'username': None,
         'api_token': None,
         'opener': None,
@@ -221,12 +221,20 @@ def read_config(conf):
         # for testing purposes
         return module_config
 
-    collectd.register_read(
-        read_metrics,
-        module_config['interval'],
-        data=module_config,
-        name=module_config['member_id']
-    )
+    if module_config['interval'] is not None:
+        collectd.register_read(
+            read_metrics,
+            module_config['interval'],
+            data=module_config,
+            name=module_config['member_id']
+        )
+    else:
+        module_config['interval'] = DEFAULT_INTERVAL
+        collectd.register_read(
+            read_metrics,
+            data=module_config,
+            name=module_config['member_id']
+        )
 
 
 def str_to_bool(flag):
@@ -460,7 +468,7 @@ def get_response(url, api_type, module_config):
         resp_obj = _api_call(api_url, module_config['opener'], module_config['http_timeout'])
 
     if resp_obj is None:
-        collectd.error('Unable to get data from jenkins node')
+        collectd.error('Unable to get data from %s for %s' % (api_url, api_type))
 
     return resp_obj
 
