@@ -11,7 +11,6 @@ import urllib2
 import collectd
 
 PLUGIN_NAME = 'jenkins'
-DEFAULT_INTERVAL = 10
 DEFAULT_API_TIMEOUT = 60
 
 
@@ -140,7 +139,6 @@ def read_config(conf):
     module_config = {
         'member_id': None,
         'plugin_config': {},
-        'interval': None,
         'username': None,
         'api_token': None,
         'opener': None,
@@ -153,6 +151,7 @@ def read_config(conf):
         'jobs_last_timestamp': {}
     }
 
+    interval = None
     testing = False
 
     required_keys = ('Host', 'Port')
@@ -162,7 +161,7 @@ def read_config(conf):
         if val.key in required_keys:
             module_config['plugin_config'][val.key] = val.values[0]
         elif val.key == 'Interval' and val.values[0]:
-            module_config['interval'] = val.values[0]
+            interval = val.values[0]
         elif val.key in auth_keys and val.key == 'Username' and \
                 val.values[0]:
             module_config['username'] = val.values[0]
@@ -221,15 +220,14 @@ def read_config(conf):
         # for testing purposes
         return module_config
 
-    if module_config['interval'] is not None:
+    if interval is not None:
         collectd.register_read(
             read_metrics,
-            module_config['interval'],
+            interval,
             data=module_config,
             name=module_config['member_id']
         )
     else:
-        module_config['interval'] = DEFAULT_INTERVAL
         collectd.register_read(
             read_metrics,
             data=module_config,
@@ -305,7 +303,6 @@ def prepare_and_dispatch_metric(module_config, name, value, _type, extra_dimensi
         'type': data_point.type,
         'type_instance': data_point.type_instance,
         'values': data_point.values,
-        'interval': module_config['interval']
     }
     collectd.debug(pprint.pformat(pprint_dict))
 
@@ -514,7 +511,7 @@ def read_metrics(module_config):
                 if job['name'] in module_config['jobs_last_timestamp']:
                     last_timestamp = module_config['jobs_last_timestamp'][job['name']]
                 else:
-                    last_timestamp = int(time.time() * 1000) - (module_config['interval'] * 1000)
+                    last_timestamp = int(time.time() * 1000) - (60 * 1000)
                     module_config['jobs_last_timestamp'][job['name']] = last_timestamp
                 read_and_post_job_metrics(module_config, job['url'], job['name'], last_timestamp)
 
