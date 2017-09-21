@@ -1,0 +1,16 @@
+#!/bin/bash
+
+wait_for () {
+    host=$1
+    while ! nc -z $host 8000
+    do
+      sleep 0.2
+    done
+}
+
+for host in master
+do
+  wait_for $host
+done
+
+exec /.docker/run.sh

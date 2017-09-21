@@ -1,0 +1,69 @@
+version: '2'
+services:
+  collectd:
+    build:
+      context: ..
+      dockerfile: integration-test/Dockerfile.collectd
+    environment:
+      SF_API_TOKEN: testing
+      SF_INGEST_HOST: fake_sfx
+    depends_on:
+      - fake_sfx
+      - master2603
+      - master2463
+
+  collectdamazon2017:
+    build:
+      context: ..
+      dockerfile: integration-test/Dockerfile.collectd.amazon2017.03
+    depends_on:
+      - fake_sfx
+      - master2603
+      - master2463
+
+  master2603:
+    build:
+      context: ..
+      dockerfile: integration-test/Dockerfile.jenkins
+      args:
+        VER: 2.60.3
+        PORT: 8000
+    ports:
+      - "50000:50000"
+      - "8000:8000"
+    volumes:
+      - /var/jenkins_home_2603
+    container_name: master2603
+
+  master2463:
+    build:
+      context: ..
+      dockerfile: integration-test/Dockerfile.jenkins
+      args:
+        VER: 2.46.3
+        PORT: 8001
+    ports:
+      - "50001:50001"
+      - "8001:8001"
+    volumes:
+      - /var/jenkins_home_2463
+    container_name: master2463
+
+  fake_sfx:
+    build:
+      context: .
+      dockerfile: Dockerfile.sink
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    depends_on:
+      - collectd
+
+  test26: # this is to test that python2.6 works (because collectd is linked to 2.6 on amazon)
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    depends_on:
+      - collectdamazon2017
