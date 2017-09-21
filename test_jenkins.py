@@ -107,9 +107,7 @@ def test_default_config():
     assert module_config['plugin_config']['Host'] == 'localhost'
     assert module_config['plugin_config']['Port'] == '2379'
     assert module_config['metrics_key'] == '6Z95HwGBHOj4uBOlsakGR91dxbFenpfz_g2wdBlUAh0-ocmK-CvdHLSvE1LGRdmg'
-    assert module_config['interval'] == '60'
     assert module_config['base_url'] == 'http://localhost:2379/'
-
 
 
 mock_config_check_bool = mock.Mock()
@@ -128,7 +126,6 @@ def test_boolean_config():
     assert module_config['plugin_config']['Host'] == 'localhost'
     assert module_config['plugin_config']['Port'] == '2379'
     assert module_config['metrics_key'] == '6Z95HwGBHOj4uBOlsakGR91dxbFenpfz_g2wdBlUAh0-ocmK-CvdHLSvE1LGRdmg'
-    assert module_config['interval'] == '10'
     assert module_config['base_url'] == 'http://localhost:2379/'
     assert module_config['enhanced_metrics'] == False
 

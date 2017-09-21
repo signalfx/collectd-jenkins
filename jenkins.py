@@ -18,46 +18,46 @@ Metric = collections.namedtuple('Metric', ('name', 'type'))
 
 JOB_METRICS = {
     'duration':
-            Metric('jenkins.job.duration', 'gauge'),
+        Metric('jenkins.job.duration', 'gauge'),
 }
 
 NODE_METRICS = {
     'vm.memory.total.used':
-            Metric('jenkins.node.vm.memory.total.used', 'gauge'),
+        Metric('jenkins.node.vm.memory.total.used', 'gauge'),
     'vm.memory.heap.usage':
-            Metric('jenkins.node.vm.memory.heap.usage', 'gauge'),
+        Metric('jenkins.node.vm.memory.heap.usage', 'gauge'),
     'vm.memory.non-heap.used':
-            Metric('jenkins.node.vm.memory.non-heap.used', 'gauge'),
+        Metric('jenkins.node.vm.memory.non-heap.used', 'gauge'),
     'jenkins.queue.size.value':
-            Metric('jenkins.node.queue.size.value', 'gauge'),
+        Metric('jenkins.node.queue.size.value', 'gauge'),
     'jenkins.health-check.score':
-            Metric('jenkins.node.health-check.score', 'gauge'),
+        Metric('jenkins.node.health-check.score', 'gauge'),
     'jenkins.executor.count.value':
-            Metric('jenkins.node.executor.count.value', 'gauge'),
+        Metric('jenkins.node.executor.count.value', 'gauge'),
     'jenkins.executor.in-use.value':
-            Metric('jenkins.node.executor.in-use.value', 'gauge')
+        Metric('jenkins.node.executor.in-use.value', 'gauge')
 }
 
 
 HEALTH_METRICS = {
     'disk-space':
-            Metric('jenkins.node.health.disk.space', 'gauge'),
+        Metric('jenkins.node.health.disk.space', 'gauge'),
     'temporary-space':
-            Metric('jenkins.node.health.temporary.space', 'gauge'),
+        Metric('jenkins.node.health.temporary.space', 'gauge'),
     'plugins':
-            Metric('jenkins.node.health.plugins', 'gauge'),
+        Metric('jenkins.node.health.plugins', 'gauge'),
     'thread-deadlock':
-            Metric('jenkins.node.health.thread-deadlock', 'gauge')
+        Metric('jenkins.node.health.thread-deadlock', 'gauge')
 }
 
 NODE_STATUS_METRICS = {
     'ping':
-            Metric('jenkins.node.online.status', 'gauge')
+        Metric('jenkins.node.online.status', 'gauge')
 }
 
 SLAVE_STATUS_METRICS = {
     'offline':
-            Metric('jenkins.node.slave.online.status', 'gauge')
+        Metric('jenkins.node.slave.online.status', 'gauge')
 }
 
 
@@ -122,7 +122,7 @@ def ping_check(url, opener, http_timeout):
         resp = urllib2.urlopen(url, timeout=http_timeout)
     except (urllib2.HTTPError, urllib2.URLError) as e:
         collectd.error("Error making API call (%s) %s" % (e, url))
-        return None
+        return False
 
     val = resp.read().strip()
 
