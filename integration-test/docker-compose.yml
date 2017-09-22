@@ -24,9 +24,8 @@ services:
   master2603:
     build:
       context: ..
-      dockerfile: integration-test/Dockerfile.jenkins
+      dockerfile: integration-test/Dockerfile.jenkins.2603
       args:
-        VER: 2.60.3
         PORT: 8000
     ports:
       - 8000
@@ -34,9 +33,8 @@ services:
   master2463:
     build:
       context: ..
-      dockerfile: integration-test/Dockerfile.jenkins
+      dockerfile: integration-test/Dockerfile.jenkins.2463
       args:
-        VER: 2.46.3
         PORT: 8000
     ports:
       - 8000
