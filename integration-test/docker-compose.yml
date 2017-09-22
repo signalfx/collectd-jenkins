@@ -29,11 +29,7 @@ services:
         VER: 2.60.3
         PORT: 8000
     ports:
-      - "50000:50000"
-      - "8000:8000"
-    volumes:
-      - /var/jenkins_home_2603
-    container_name: master2603
+      - 8000
 
   master2463:
     build:
@@ -41,13 +37,9 @@ services:
       dockerfile: integration-test/Dockerfile.jenkins
       args:
         VER: 2.46.3
-        PORT: 8001
+        PORT: 8000
     ports:
-      - "50001:50001"
-      - "8001:8001"
-    volumes:
-      - /var/jenkins_home_2463
-    container_name: master2463
+      - 8000
 
   fake_sfx:
     build:

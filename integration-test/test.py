@@ -4,7 +4,7 @@ import json
 from time import time, sleep
 from subprocess import call
 
-# Quick and dirty integration test for multiple broker support for etcd for
+# Quick and dirty integration test for multiple broker support for jenkins for
 # one collectd instance. This test script is intended to be run with
 # docker-compose with the provided docker-compose.yml configuration.
 
@@ -24,10 +24,7 @@ def get_metric_data():
     conn.request("GET", "/")
     resp = conn.getresponse()
     a = resp.read()
-    val = json.loads(a) 
-    print val
-    return val
-    # return json.loads(a)
+    return json.loads(a)
 
 
 def wait_for_metrics_from_each_member():

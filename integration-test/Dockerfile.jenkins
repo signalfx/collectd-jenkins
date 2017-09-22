@@ -8,5 +8,3 @@ ARG PORT
 
 ENV JENKINS_OPTS --httpPort=${PORT}
 ENV JAVA_OPTS="-Djenkins.install.runSetupWizard=false"
-
-EXPOSE ${PORT}

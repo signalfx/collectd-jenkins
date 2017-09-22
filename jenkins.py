@@ -82,7 +82,7 @@ class HTTPBasicPriorAuthHandler(urllib2.HTTPBasicAuthHandler):
             credentials = '{0}:{1}'.format(user, passwd).encode()
             auth_str = base64.standard_b64encode(credentials).decode()
             req.add_unredirected_header('Authorization',
-                                        'Basic {}'.format(auth_str.strip()))
+                                        'Basic {0}'.format(auth_str.strip()))
         return req
 
     https_request = http_request

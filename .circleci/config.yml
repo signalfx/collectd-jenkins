@@ -29,7 +29,7 @@ jobs:
           command: |
             pip install -r test_requirements.txt
             bash verify.sh
-      # - run:
-      #     name: Run integration tests
-      #     working_directory: ~/code/integration-test
-      #     command: bash run.sh
+      - run:
+          name: Run integration tests
+          working_directory: ~/code/integration-test
+          command: bash run.sh
