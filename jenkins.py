@@ -313,12 +313,14 @@ def read_and_post_job_metrics(module_config, url, job_name, last_timestamp):
     '''
     Reads json for a job and dispatches job related metrics
     '''
-    resp_obj = get_response(url, 'jenkins', module_config)
+    job_url = url + 'job/' + job_name + '/'
+    resp_obj = get_response(job_url, 'jenkins', module_config)
     extra_dimensions = {}
     extra_dimensions['Job'] = job_name
     if resp_obj and resp_obj['builds']:
         for i in xrange(len(resp_obj['builds'])):
-            resp = get_response(resp_obj['builds'][i]['url'], 'jenkins', module_config)
+            build_url = job_url + str(resp_obj['builds'][i]['number']) + '/'
+            resp = get_response(build_url, 'jenkins', module_config)
 
             # Dispatch metrics only if build has completed
             if resp and not resp['building']:
@@ -513,7 +515,7 @@ def read_metrics(module_config):
                 else:
                     last_timestamp = int(time.time() * 1000) - (60 * 1000)
                     module_config['jobs_last_timestamp'][job['name']] = last_timestamp
-                read_and_post_job_metrics(module_config, job['url'], job['name'], last_timestamp)
+                read_and_post_job_metrics(module_config, module_config['base_url'], job['name'], last_timestamp)
 
 
 def init():
