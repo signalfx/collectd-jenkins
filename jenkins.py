@@ -6,7 +6,12 @@ import collections
 import json
 import pprint
 import time
+try:
+    from urllib import quote as urllib_quote
+except ImportError:
+    from urllib.parse import quote as urllib_quote
 import urllib2
+import urlparse
 
 import collectd
 
@@ -96,6 +101,8 @@ def _api_call(url, opener, http_timeout):
     Returns:
     list: The JSON response
     """
+    parsed_url = urlparse.urlparse(url)
+    url = '{0}://{1}{2}'.format(parsed_url.scheme, parsed_url.netloc, urllib_quote(parsed_url.path))
     try:
         urllib2.install_opener(opener)
         resp = urllib2.urlopen(url, timeout=http_timeout)
