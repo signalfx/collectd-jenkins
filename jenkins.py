@@ -86,7 +86,7 @@ class HTTPBasicPriorAuthHandler(urllib2.HTTPBasicAuthHandler):
             user, passwd = self.passwd.find_user_password(None, req.host)
             credentials = '{0}:{1}'.format(user, passwd).encode()
             auth_str = base64.standard_b64encode(credentials).decode()
-            req.add_unredirected_header('Authorization',
+            req.add_unredirected_header('auth',
                                         'Basic {0}'.format(auth_str.strip()))
         return req
 
@@ -324,9 +324,10 @@ def read_and_post_job_metrics(module_config, url, job_name, last_timestamp):
     resp_obj = get_response(job_url, 'jenkins', module_config)
     extra_dimensions = {}
     extra_dimensions['Job'] = job_name
-    if resp_obj and resp_obj['builds']:
-        for i in xrange(len(resp_obj['builds'])):
-            build_url = job_url + str(resp_obj['builds'][i]['number']) + '/'
+    if isinstance(resp_obj, dict) and resp_obj.get('builds', None) is not None:
+        builds = resp_obj['builds']
+        for i in xrange(len(builds)):
+            build_url = job_url + str(builds[i]['number']) + '/'
             resp = get_response(build_url, 'jenkins', module_config)
 
             # Dispatch metrics only if build has completed
