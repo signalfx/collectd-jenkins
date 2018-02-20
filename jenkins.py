@@ -12,6 +12,7 @@ except ImportError:
     from urllib.parse import quote as urllib_quote
 import urllib2
 import urlparse
+import ssl
 
 import collectd
 
@@ -104,8 +105,11 @@ def _api_call(url, opener, http_timeout):
     parsed_url = urlparse.urlparse(url)
     url = '{0}://{1}{2}'.format(parsed_url.scheme, parsed_url.netloc, urllib_quote(parsed_url.path))
     try:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
         urllib2.install_opener(opener)
-        resp = urllib2.urlopen(url, timeout=http_timeout)
+        resp = urllib2.urlopen(url, timeout=http_timeout, context=ctx)
     except (urllib2.HTTPError, urllib2.URLError) as e:
         collectd.error("Error making API call (%s) %s" % (e, url))
         return None
@@ -125,8 +129,11 @@ def ping_check(url, opener, http_timeout):
     bool: The Success or Failure status based on HTTP response
     """
     try:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
         urllib2.install_opener(opener)
-        resp = urllib2.urlopen(url, timeout=http_timeout)
+        resp = urllib2.urlopen(url, timeout=http_timeout, context=ctx)
     except (urllib2.HTTPError, urllib2.URLError) as e:
         collectd.error("Error making API call (%s) %s" % (e, url))
         return False
@@ -206,8 +213,12 @@ def read_config(conf):
     module_config['member_id'] = ("%s:%s" % (
         module_config['plugin_config']['Host'], module_config['plugin_config']['Port']))
 
-    module_config['base_url'] = ("http://%s:%s/" %
-                                 (module_config['plugin_config']['Host'], module_config['plugin_config']['Port']))
+    # module_config['proto'] = module_config['plugin_config']['Port'] == 443 ? 'https' : 'http'
+
+    # TODO
+    # make 'proto' configurable
+    module_config['base_url'] = ("%s://%s:%s/" %
+                                 ('https', module_config['plugin_config']['Host'], module_config['plugin_config']['Port']))
 
     if module_config['username'] is None and module_config['api_token'] is None:
         module_config['username'] = module_config['api_token'] = ''
