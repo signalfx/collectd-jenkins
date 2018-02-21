@@ -28,10 +28,32 @@ JOB_METRICS = {
 }
 
 NODE_METRICS = {
+    'vm.memory.total.committed':
+        Metric('jenkins.node.vm.memory.total.committed', 'gauge'),
+    'vm.memory.total.max':
+        Metric('jenkins.node.vm.memory.total.max', 'gauge'),
+    'vm.memory.total.init':
+        Metric('jenkins.node.vm.memory.total.init', 'gauge'),
     'vm.memory.total.used':
         Metric('jenkins.node.vm.memory.total.used', 'gauge'),
+    'vm.memory.heap.committed':
+        Metric('jenkins.node.vm.memory.heap.committed', 'gauge'),
+    'vm.memory.heap.max':
+        Metric('jenkins.node.vm.memory.heap.max', 'gauge'),
+    'vm.memory.heap.init':
+        Metric('jenkins.node.vm.memory.heap.init', 'gauge'),
     'vm.memory.heap.usage':
         Metric('jenkins.node.vm.memory.heap.usage', 'gauge'),
+    'vm.memory.heap.used':
+        Metric('jenkins.node.vm.memory.heap.used', 'gauge'),
+    'vm.memory.non-heap.committed':
+        Metric('jenkins.node.vm.memory.non-heap.committed', 'gauge'),
+    'vm.memory.non-heap.max':
+        Metric('jenkins.node.vm.memory.non-heap.max', 'gauge'),
+    'vm.memory.non-heap.init':
+        Metric('jenkins.node.vm.memory.non-heap.init', 'gauge'),
+    'vm.memory.non-heap.usage':
+        Metric('jenkins.node.vm.memory.non-heap.usage', 'gauge'),
     'vm.memory.non-heap.used':
         Metric('jenkins.node.vm.memory.non-heap.used', 'gauge'),
     'jenkins.queue.size.value':
@@ -165,6 +187,7 @@ def read_config(conf):
         'jobs_last_timestamp': {}
     }
 
+    proto = 'http'
     interval = None
     testing = False
 
@@ -174,6 +197,9 @@ def read_config(conf):
     for val in conf.children:
         if val.key in required_keys:
             module_config['plugin_config'][val.key] = val.values[0]
+        elif val.key == 'Ssl' and val.values[0]:
+            if str_to_bool(val.values[0]) == True:
+              proto = 'https'
         elif val.key == 'Interval' and val.values[0]:
             interval = val.values[0]
         elif val.key in auth_keys and val.key == 'Username' and \
@@ -213,12 +239,10 @@ def read_config(conf):
     module_config['member_id'] = ("%s:%s" % (
         module_config['plugin_config']['Host'], module_config['plugin_config']['Port']))
 
-    # module_config['proto'] = module_config['plugin_config']['Port'] == 443 ? 'https' : 'http'
-
     # TODO
     # make 'proto' configurable
     module_config['base_url'] = ("%s://%s:%s/" %
-                                 ('https', module_config['plugin_config']['Host'], module_config['plugin_config']['Port']))
+                                 (proto, module_config['plugin_config']['Host'], module_config['plugin_config']['Port']))
 
     if module_config['username'] is None and module_config['api_token'] is None:
         module_config['username'] = module_config['api_token'] = ''
