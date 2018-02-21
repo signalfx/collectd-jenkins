@@ -199,7 +199,7 @@ def read_config(conf):
             module_config['plugin_config'][val.key] = val.values[0]
         elif val.key == 'Ssl' and val.values[0]:
             if str_to_bool(val.values[0]):
-              proto = 'https'
+                proto = 'https'
         elif val.key == 'Interval' and val.values[0]:
             interval = val.values[0]
         elif val.key in auth_keys and val.key == 'Username' and \
@@ -242,7 +242,8 @@ def read_config(conf):
     # TODO
     # make 'proto' configurable
     module_config['base_url'] = ("%s://%s:%s/" %
-                                 (proto, module_config['plugin_config']['Host'], module_config['plugin_config']['Port']))
+                                 (proto, module_config['plugin_config']['Host'],
+                                  module_config['plugin_config']['Port']))
 
     if module_config['username'] is None and module_config['api_token'] is None:
         module_config['username'] = module_config['api_token'] = ''
