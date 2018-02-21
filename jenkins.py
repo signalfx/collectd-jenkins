@@ -198,7 +198,7 @@ def read_config(conf):
         if val.key in required_keys:
             module_config['plugin_config'][val.key] = val.values[0]
         elif val.key == 'Ssl' and val.values[0]:
-            if str_to_bool(val.values[0]) == True:
+            if str_to_bool(val.values[0]):
               proto = 'https'
         elif val.key == 'Interval' and val.values[0]:
             interval = val.values[0]
