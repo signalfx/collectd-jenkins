@@ -5,6 +5,7 @@ A Jenkins collectd plugin which users can use to send metrics from jenkins insta
 ## Installation
 
 * Checkout this repository somewhere on your system accessible by collectd. The suggested location is `/usr/share/collectd/`
+* Install the Python requirements with `sudo pip install -r requirements.txt`
 * Install the Metrics Plugin in Jenkins. `Manage Jenkins > Manage Plugins > Available > Search "Metrics Plugin"`
 * Configure the plugin (see below)
 * Restart collectd
@@ -35,6 +36,15 @@ Optional configurations keys include:
 * ExcludeMetric - Advanced Metrics from the `/metrics/<MetricsKey>/metrics` endpoint can be excluded individually
 * Dimension - Add extra dimensions to your metrics
 
+Specify path to keyfile and certificate if certificate based authentication of clients is enabled on your etcd server
+
+* ssl_keyfile - path to file
+* ssl_certificate - path to file
+
+Provide a custom file that lists trusted CA certificates, required when keyfile and certificate are provided
+
+* ssl_ca_certs - path to file
+
 From `/metrics/<MetricsKey>/metrics` only the metrics inside `gauges` key are representable, if the value is a number. Metrics of type `histograms`, `meter` and `timer` will be skipped over. Check out `https://wiki.jenkins.io/display/JENKINS/Metrics+Plugin` for description of the metrics.
 
 Note that multiple Jenkins instances can be configured in the same file.
@@ -47,7 +57,7 @@ LoadPlugin python
     <Module jenkins>
         Host "localhost"
         Port "8080"
-        Username "nishant"
+        Username "john"
         APIToken "f04fff7c860d884f2ef00a2b2d481c2f"
         MetricsKey "6ZHwGBkGR91dxbFenpfz_g2h0-ocmK-CvdHLdmg"
         Interval 10
