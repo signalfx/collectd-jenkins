@@ -28,32 +28,10 @@ JOB_METRICS = {
 }
 
 NODE_METRICS = {
-    'vm.memory.total.committed':
-        Metric('jenkins.node.vm.memory.total.committed', 'gauge'),
-    'vm.memory.total.max':
-        Metric('jenkins.node.vm.memory.total.max', 'gauge'),
-    'vm.memory.total.init':
-        Metric('jenkins.node.vm.memory.total.init', 'gauge'),
     'vm.memory.total.used':
         Metric('jenkins.node.vm.memory.total.used', 'gauge'),
-    'vm.memory.heap.committed':
-        Metric('jenkins.node.vm.memory.heap.committed', 'gauge'),
-    'vm.memory.heap.max':
-        Metric('jenkins.node.vm.memory.heap.max', 'gauge'),
-    'vm.memory.heap.init':
-        Metric('jenkins.node.vm.memory.heap.init', 'gauge'),
     'vm.memory.heap.usage':
         Metric('jenkins.node.vm.memory.heap.usage', 'gauge'),
-    'vm.memory.heap.used':
-        Metric('jenkins.node.vm.memory.heap.used', 'gauge'),
-    'vm.memory.non-heap.committed':
-        Metric('jenkins.node.vm.memory.non-heap.committed', 'gauge'),
-    'vm.memory.non-heap.max':
-        Metric('jenkins.node.vm.memory.non-heap.max', 'gauge'),
-    'vm.memory.non-heap.init':
-        Metric('jenkins.node.vm.memory.non-heap.init', 'gauge'),
-    'vm.memory.non-heap.usage':
-        Metric('jenkins.node.vm.memory.non-heap.usage', 'gauge'),
     'vm.memory.non-heap.used':
         Metric('jenkins.node.vm.memory.non-heap.used', 'gauge'),
     'jenkins.queue.size.value':
