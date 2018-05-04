@@ -98,7 +98,16 @@ def _api_call(url, opener, http_timeout):
     try:
         urllib2.install_opener(opener)
         resp = urllib2.urlopen(url, timeout=http_timeout)
-    except (urllib2.HTTPError, urllib2.URLError) as e:
+    except (urllib2.HTTPError) as e:
+	# Workaround for Jenkins issue with health check
+	# which returns 500 server code if a health check fails
+	# https://github.com/sensu-plugins/sensu-plugins-jenkins/issues/10
+	if e.code == 500:
+	    return json.loads(e.read())
+	else:
+            collectd.error("Error making API call (%s) %s" % (e, url))
+            return None
+    except (urllib2.URLError) as e:
         collectd.error("Error making API call (%s) %s" % (e, url))
         return None
     try:
