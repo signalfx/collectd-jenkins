@@ -85,7 +85,7 @@ def get_ssl_params(data):
     return (key_file, cert_file, ca_certs)
 
 
-def _api_call(url, opener, http_timeout):
+def _api_call(url, type, opener, http_timeout):
     """
     Makes a REST call against the Jenkins API.
     Args:
@@ -104,8 +104,11 @@ def _api_call(url, opener, http_timeout):
     try:
         return json.load(resp)
     except ValueError, e:
-        collectd.error("Error parsing JSON for API call (%s) %s" % (e, url))
-        return None
+        if e.code == 500 and type == "healthcheck":
+            return json.load(resp)
+        else:
+            collectd.error("Error parsing JSON for API call (%s) %s" % (e, url))
+            return None
 
 
 def ping_check(url, opener, http_timeout):
@@ -491,7 +494,7 @@ def get_response(url, api_type, module_config):
     if api_type == 'ping':
         resp_obj = ping_check(api_url, module_config['opener'], module_config['http_timeout'])
     else:
-        resp_obj = _api_call(api_url, module_config['opener'], module_config['http_timeout'])
+        resp_obj = _api_call(api_url, api_type, module_config['opener'], module_config['http_timeout'])
 
     if resp_obj is None:
         collectd.error('Unable to get data from %s for %s' % (api_url, api_type))
