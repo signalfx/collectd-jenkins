@@ -26,10 +26,11 @@ class HTTPBasicPriorAuthHandler(urllib.request.HTTPBasicAuthHandler):
     def http_request(self, req):
         if not req.has_header('Authorization'):
             user, passwd = self.passwd.find_user_password(None, req.host)
-            credentials = '{0}:{1}'.format(user, passwd).encode()
-            auth_str = base64.standard_b64encode(credentials).decode()
-            req.add_unredirected_header('auth',
-                                        'Basic {0}'.format(auth_str.strip()))
+            if user and passwd:
+                credentials = '{0}:{1}'.format(user, passwd).encode()
+                auth_str = base64.standard_b64encode(credentials).decode()
+                req.add_unredirected_header('Authorization',
+                                            'Basic {0}'.format(auth_str.strip()))
         return req
 
 
@@ -149,10 +150,11 @@ class HTTPSHandler(urllib.request.HTTPSHandler):
     # https://bugs.python.org/issue19494
     def https_request(self, req):
         if not req.has_header('Authorization'):
-            credentials = '{0}:{1}'.format(self.user, self.passwd).encode()
-            auth_str = base64.standard_b64encode(credentials).decode()
-            req.add_unredirected_header('auth',
-                                        'Basic {0}'.format(auth_str.strip()))
+            if self.user and self.passwd:
+                credentials = '{0}:{1}'.format(self.user, self.passwd).encode()
+                auth_str = base64.standard_b64encode(credentials).decode()
+                req.add_unredirected_header('Authorization',
+                                            'Basic {0}'.format(auth_str.strip()))
         return req
 
 
