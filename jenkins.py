@@ -85,6 +85,14 @@ def get_ssl_params(data):
     return (key_file, cert_file, ca_certs)
 
 
+def load_json(resp, url):
+    try:
+        return json.load(resp)
+    except ValueError, e:
+        collectd.error("Error parsing JSON for API call (%s) %s" % (e, url))
+        return None
+
+
 def _api_call(url, type, opener, http_timeout):
     """
     Makes a REST call against the Jenkins API.
@@ -99,16 +107,13 @@ def _api_call(url, type, opener, http_timeout):
         urllib2.install_opener(opener)
         resp = urllib2.urlopen(url, timeout=http_timeout)
     except (urllib2.HTTPError, urllib2.URLError) as e:
-        collectd.error("Error making API call (%s) %s" % (e, url))
-        return None
-    try:
-        return json.load(resp)
-    except ValueError, e:
         if e.code == 500 and type == "healthcheck":
-            return json.load(resp)
+            return load_json(e, url)
         else:
-            collectd.error("Error parsing JSON for API call (%s) %s" % (e, url))
+            collectd.error("Error making API call (%s) %s" % (e, url))
             return None
+
+    return load_json(resp, url)
 
 
 def ping_check(url, opener, http_timeout):
