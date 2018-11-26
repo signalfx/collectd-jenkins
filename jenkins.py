@@ -106,12 +106,15 @@ def _api_call(url, type, opener, http_timeout):
     try:
         urllib2.install_opener(opener)
         resp = urllib2.urlopen(url, timeout=http_timeout)
-    except (urllib2.HTTPError, urllib2.URLError) as e:
+    except urllib2.HTTPError as e:
         if e.code == 500 and type == "healthcheck":
             return load_json(e, url)
         else:
             collectd.error("Error making API call (%s) %s" % (e, url))
             return None
+    except urllib2.URLError as e:
+        collectd.error("Error making API call (%s) %s" % (e, url))
+        return None
 
     return load_json(resp, url)
 
