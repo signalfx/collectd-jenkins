@@ -103,9 +103,11 @@ def _api_call(url, type, opener, http_timeout):
     """
     parsed_url = urlparse.urlparse(url)
     url = '{0}://{1}{2}'.format(parsed_url.scheme, parsed_url.netloc, urllib_quote(parsed_url.path))
+    resp = None
     try:
         urllib2.install_opener(opener)
         resp = urllib2.urlopen(url, timeout=http_timeout)
+        return load_json(resp, url)
     except urllib2.HTTPError as e:
         if e.code == 500 and type == "healthcheck":
             return load_json(e, url)
@@ -115,8 +117,9 @@ def _api_call(url, type, opener, http_timeout):
     except urllib2.URLError as e:
         collectd.error("Error making API call (%s) %s" % (e, url))
         return None
-
-    return load_json(resp, url)
+    finally:
+        if resp:
+            resp.close()
 
 
 def ping_check(url, opener, http_timeout):
@@ -127,6 +130,7 @@ def ping_check(url, opener, http_timeout):
     Returns:
     bool: The Success or Failure status based on HTTP response
     """
+    resp = None
     try:
         urllib2.install_opener(opener)
         resp = urllib2.urlopen(url, timeout=http_timeout)
@@ -134,12 +138,15 @@ def ping_check(url, opener, http_timeout):
         collectd.error("Error making API call (%s) %s" % (e, url))
         return False
 
-    val = resp.read().strip()
+        val = resp.read().strip()
 
-    if val == "pong":
-        return True
-    else:
-        return False
+        if val == "pong":
+            return True
+        else:
+            return False
+    finally:
+        if resp:
+            resp.close()
 
 
 def get_auth_handler(module_config):
