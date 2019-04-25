@@ -134,16 +134,14 @@ def ping_check(url, opener, http_timeout):
     try:
         urllib2.install_opener(opener)
         resp = urllib2.urlopen(url, timeout=http_timeout)
-    except (urllib2.HTTPError, urllib2.URLError) as e:
-        collectd.error("Error making API call (%s) %s" % (e, url))
-        return False
-
         val = resp.read().strip()
-
         if val == "pong":
             return True
         else:
             return False
+    except (urllib2.HTTPError, urllib2.URLError) as e:
+        collectd.error("Error making API call (%s) %s" % (e, url))
+        return False
     finally:
         if resp:
             resp.close()
