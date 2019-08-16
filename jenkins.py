@@ -20,10 +20,8 @@ import collectd
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 urllib3.disable_warnings(urllib3.exceptions.SubjectAltNameWarning)
 
-
 PLUGIN_NAME = 'jenkins'
 DEFAULT_API_TIMEOUT = 60
-
 
 Metric = collections.namedtuple('Metric', ('name', 'type'))
 
@@ -48,7 +46,6 @@ NODE_METRICS = {
     'jenkins.executor.in-use.value':
         Metric('jenkins.node.executor.in-use.value', 'gauge')
 }
-
 
 HEALTH_METRICS = {
     'disk-space':
@@ -263,7 +260,8 @@ def read_config(conf):
     module_config['base_url'] = ("http://%s:%s/" %
                                  (module_config['plugin_config']['Host'], module_config['plugin_config']['Port']))
 
-    if module_config['ssl_keys']['enabled']:
+    if module_config['ssl_keys']['enabled'] or (
+            'ssl_certificate' in module_config['ssl_keys'] and 'ssl_keyfile' in module_config['ssl_keys']):
         module_config['base_url'] = ('https' + module_config['base_url'][4:])
 
     if module_config['username'] is None and module_config['api_token'] is None:
