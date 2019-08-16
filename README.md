@@ -1,6 +1,6 @@
 # collectd jenkins Plugin
 
-A Jenkins collectd plugin which users can use to send metrics from jenkins instances to SignalFx
+A Jenkins collectd plugin which users can use to send metrics from Jenkins instances to SignalFx.
 
 ## Installation
 
@@ -13,7 +13,7 @@ A Jenkins collectd plugin which users can use to send metrics from jenkins insta
 ## Requirements
 
 * collectd 4.9 or later (for the Python plugin)
-* Python 2.6 or later
+* Python 2.7 or later
 * Jenkins 1.580.3 or later
 * `Metrics Plugin`(see installation steps)
 
@@ -25,7 +25,6 @@ The following are required configuration keys:
 * Port - Required. The port of the jenkins instance, default is '8080'
 * MetricsKey - Required. The access key from `Manage Jenkins > Configure System > Metrics > ADD`. If empty, click Generate
 
-
 Optional configurations keys include:
 
 * Interval - Interval between metric calls. Default is 10s
@@ -36,12 +35,17 @@ Optional configurations keys include:
 * ExcludeMetric - Advanced Metrics from the `/metrics/<MetricsKey>/metrics` endpoint can be excluded individually
 * Dimension - Add extra dimensions to your metrics
 
-Specify path to keyfile and certificate if certificate based authentication of clients is enabled on your etcd server
+### SSL/TLS
+
+* ssl_enabled - True to perform HTTP requests over TLS. Default is False
+* ssl_cert_validation - False to skip certificate validation. Default is True
+
+To enable client certificate authentication specify these options:
 
 * ssl_keyfile - path to file
 * ssl_certificate - path to file
 
-Provide a custom file that lists trusted CA certificates, required when keyfile and certificate are provided
+Provide a custom file that lists trusted CA certificates, required when keyfile and certificate are provided or the server certificate is not signed by a system CA:
 
 * ssl_ca_certs - path to file
 

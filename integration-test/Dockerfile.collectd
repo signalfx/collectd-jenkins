@@ -12,5 +12,4 @@ ADD integration-test/setup_jenkins /.docker/setup_jenkins
 
 ## The context of the image build should be the root dir of this repo!!
 ADD jenkins.py /opt/collectd-jenkins/
-ADD urllib_auth_n_ssl_handler.py /opt/collectd-jenkins/
 ADD integration-test/20-jenkins-test.conf /etc/collectd/managed_config/

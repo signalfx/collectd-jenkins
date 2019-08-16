@@ -1,5 +1,5 @@
 #!/bin/bash
-flake8 --max-line-length=120 jenkins.py urllib_auth_n_ssl_handler.py
+flake8 --max-line-length=120 jenkins.py
 if [ "$?" -ne 0 ]; then
     exit 1;
 fi

@@ -44,16 +44,9 @@ services:
       context: .
       dockerfile: Dockerfile.sink
 
-  test:
+  test-jenkins:
     build:
       context: .
       dockerfile: Dockerfile.test
     depends_on:
       - collectd
-
-  test26: # this is to test that python2.6 works (because collectd is linked to 2.6 on amazon)
-    build:
-      context: .
-      dockerfile: Dockerfile.test
-    depends_on:
-      - collectdamazon2017

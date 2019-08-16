@@ -5,19 +5,23 @@ import collections
 import json
 import pprint
 import time
-try:
-    from urllib import quote as urllib_quote
-except ImportError:
-    from urllib.parse import quote as urllib_quote
-import urllib2
-import urllib_auth_n_ssl_handler
+
+import requests
+import urllib3
+from requests import HTTPError, RequestException
+from requests.auth import HTTPBasicAuth
+
+from urllib import quote as urllib_quote
 import urlparse
 
 import collectd
 
+# Prevents spamming when not validating certificates.
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+urllib3.disable_warnings(urllib3.exceptions.SubjectAltNameWarning)
+
 PLUGIN_NAME = 'jenkins'
 DEFAULT_API_TIMEOUT = 60
-
 
 Metric = collections.namedtuple('Metric', ('name', 'type'))
 
@@ -42,7 +46,6 @@ NODE_METRICS = {
     'jenkins.executor.in-use.value':
         Metric('jenkins.node.executor.in-use.value', 'gauge')
 }
-
 
 HEALTH_METRICS = {
     'disk-space':
@@ -70,11 +73,13 @@ def get_ssl_params(data):
     '''
     Helper method to prepare auth tuple
     '''
+    ssl_keys = data['ssl_keys']
+
     key_file = None
     cert_file = None
     ca_certs = None
+    cert_validation = ssl_keys['ssl_cert_validation']
 
-    ssl_keys = data['ssl_keys']
     if 'ssl_certificate' in ssl_keys and 'ssl_keyfile' in ssl_keys:
         key_file = ssl_keys['ssl_keyfile']
         cert_file = ssl_keys['ssl_certificate']
@@ -82,18 +87,18 @@ def get_ssl_params(data):
     if 'ssl_ca_certs' in ssl_keys:
         ca_certs = ssl_keys['ssl_ca_certs']
 
-    return (key_file, cert_file, ca_certs)
+    return (key_file, cert_file, ca_certs, cert_validation)
 
 
 def load_json(resp, url):
     try:
-        return json.load(resp)
+        return json.loads(resp)
     except ValueError, e:
         collectd.error("Error parsing JSON for API call (%s) %s" % (e, url))
         return None
 
 
-def _api_call(url, type, opener, http_timeout):
+def _api_call(url, type, auth_args, http_timeout):
     """
     Makes a REST call against the Jenkins API.
     Args:
@@ -105,16 +110,16 @@ def _api_call(url, type, opener, http_timeout):
     url = '{0}://{1}{2}'.format(parsed_url.scheme, parsed_url.netloc, urllib_quote(parsed_url.path))
     resp = None
     try:
-        urllib2.install_opener(opener)
-        resp = urllib2.urlopen(url, timeout=http_timeout)
-        return load_json(resp, url)
-    except urllib2.HTTPError as e:
-        if e.code == 500 and type == "healthcheck":
-            return load_json(e, url)
+        resp = requests.get(url, timeout=http_timeout, **auth_args)
+        resp.raise_for_status()
+        return load_json(resp.text, url)
+    except HTTPError as e:
+        if e.response.status_code == 500 and type == "healthcheck":
+            return load_json(e.response.text, url)
         else:
             collectd.error("Error making API call (%s) %s" % (e, url))
             return None
-    except urllib2.URLError as e:
+    except RequestException as e:
         collectd.error("Error making API call (%s) %s" % (e, url))
         return None
     finally:
@@ -122,7 +127,7 @@ def _api_call(url, type, opener, http_timeout):
             resp.close()
 
 
-def ping_check(url, opener, http_timeout):
+def ping_check(url, auth_args, http_timeout):
     """
     Makes a REST call against Jenkins to get alive status.
     Args:
@@ -132,14 +137,14 @@ def ping_check(url, opener, http_timeout):
     """
     resp = None
     try:
-        urllib2.install_opener(opener)
-        resp = urllib2.urlopen(url, timeout=http_timeout)
-        val = resp.read().strip()
+        resp = requests.get(url, timeout=http_timeout, **auth_args)
+        resp.raise_for_status()
+        val = resp.text.strip()
         if val == "pong":
             return True
         else:
             return False
-    except (urllib2.HTTPError, urllib2.URLError) as e:
+    except RequestException as e:
         collectd.error("Error making API call (%s) %s" % (e, url))
         return False
     finally:
@@ -147,24 +152,25 @@ def ping_check(url, opener, http_timeout):
             resp.close()
 
 
-def get_auth_handler(module_config):
+def get_auth_args(module_config):
+    key_file, cert_file, ca_certs, cert_validation = get_ssl_params(module_config)
 
-    key_file, cert_file, ca_certs = get_ssl_params(module_config)
+    args = {
+        "verify": True,
+    }
 
-    if key_file is not None and cert_file is not None:
-        auth_handler = urllib_auth_n_ssl_handler.HTTPSHandler(user=module_config['username'],
-                                                              passwd=module_config['api_token'],
-                                                              key_file=key_file,
-                                                              cert_file=cert_file,
-                                                              ca_certs=ca_certs)
+    if key_file and cert_file:
+        args["cert"] = (cert_file, key_file)
     else:
-        auth_handler = urllib_auth_n_ssl_handler.HTTPBasicPriorAuthHandler()
-        auth_handler.add_password(realm=None,
-                                  uri=module_config['base_url'],
-                                  user=module_config['username'],
-                                  passwd=module_config['api_token'])
+        args["auth"] = HTTPBasicAuth(module_config['username'], module_config['api_token'])
 
-    return auth_handler
+    if ca_certs:
+        args["verify"] = ca_certs
+
+    if not cert_validation:
+        args["verify"] = False
+
+    return args
 
 
 def read_config(conf):
@@ -184,7 +190,10 @@ def read_config(conf):
         'exclude_optional_metrics': set(),
         'http_timeout': DEFAULT_API_TIMEOUT,
         'jobs_last_timestamp': {},
-        'ssl_keys': {}
+        'ssl_keys': {
+            'enabled': False,
+            'ssl_cert_validation': True,
+        }
     }
 
     interval = None
@@ -218,12 +227,19 @@ def read_config(conf):
             module_config['include_optional_metrics'].add(val.values[0])
         elif val.key == 'ExcludeMetric' and val.values[0] and val.values[0] not in NODE_METRICS:
             module_config['exclude_optional_metrics'].add(val.values[0])
+        elif val.key == 'ssl_enabled' and val.values[0]:
+            module_config['ssl_keys']['enabled'] = str_to_bool(val.values[0])
         elif val.key == 'ssl_keyfile' and val.values[0]:
             module_config['ssl_keys']['ssl_keyfile'] = val.values[0]
         elif val.key == 'ssl_certificate' and val.values[0]:
             module_config['ssl_keys']['ssl_certificate'] = val.values[0]
         elif val.key == 'ssl_ca_certs' and val.values[0]:
             module_config['ssl_keys']['ssl_ca_certs'] = val.values[0]
+        elif val.key == "ssl_cert_validation" and val.values[0]:
+            # Doesn't use str_to_bool because the function defaults to
+            # false and we want to default to true.
+            if val.values[0].strip().lower() == 'false':
+                module_config['ssl_keys']['ssl_cert_validation'] = False
         elif val.key == 'Testing' and str_to_bool(val.values[0]):
             testing = True
 
@@ -244,7 +260,8 @@ def read_config(conf):
     module_config['base_url'] = ("http://%s:%s/" %
                                  (module_config['plugin_config']['Host'], module_config['plugin_config']['Port']))
 
-    if 'ssl_certificate' in module_config['ssl_keys'] and 'ssl_keyfile' in module_config['ssl_keys']:
+    if module_config['ssl_keys']['enabled'] or (
+            'ssl_certificate' in module_config['ssl_keys'] and 'ssl_keyfile' in module_config['ssl_keys']):
         module_config['base_url'] = ('https' + module_config['base_url'][4:])
 
     if module_config['username'] is None and module_config['api_token'] is None:
@@ -252,9 +269,7 @@ def read_config(conf):
     collectd.info("Using username '%s' and api_token '%s' " % (
         module_config['username'], module_config['api_token']))
 
-    auth_handler = get_auth_handler(module_config)
-
-    module_config['opener'] = urllib2.build_opener(auth_handler)
+    module_config['auth_args'] = get_auth_args(module_config)
 
     collectd.debug("module_config: (%s)" % str(module_config))
 
@@ -505,9 +520,9 @@ def get_response(url, api_type, module_config):
     collectd.debug('GET ' + api_url)
 
     if api_type == 'ping':
-        resp_obj = ping_check(api_url, module_config['opener'], module_config['http_timeout'])
+        resp_obj = ping_check(api_url, module_config['auth_args'], module_config['http_timeout'])
     else:
-        resp_obj = _api_call(api_url, api_type, module_config['opener'], module_config['http_timeout'])
+        resp_obj = _api_call(api_url, api_type, module_config['auth_args'], module_config['http_timeout'])
 
     if resp_obj is None:
         collectd.error('Unable to get data from %s for %s' % (api_url, api_type))

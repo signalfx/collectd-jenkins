@@ -8,21 +8,10 @@ sed -e "s#%%%VER%%%#2.60.3#g" ./Dockerfile.jenkins > ./Dockerfile.jenkins.2603
 sed -e "s#%%%VER%%%#2.46.3#g" ./Dockerfile.jenkins > ./Dockerfile.jenkins.2463
 
 printf "Running tests against python2.7\n"
-docker-compose run --rm test
+docker-compose run --rm test-jenkins
 status=$?
 
-docker-compose down
+#docker-compose down
 
 printf $status
-
-if [ "$status" != "0" ]; then exit $status; fi
-
-printf "\nRunning tests against python2.6"
-docker-compose run --rm test26
-status=$?
-
-docker-compose down
-
-printf $status
-
 exit $status
