@@ -161,7 +161,7 @@ def get_auth_args(module_config):
 
     if key_file and cert_file:
         args["cert"] = (cert_file, key_file)
-    else:
+    elif module_config['username'] and module_config['api_token']:
         args["auth"] = HTTPBasicAuth(module_config['username'], module_config['api_token'])
 
     if ca_certs:
