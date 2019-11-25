@@ -133,3 +133,9 @@ def test_boolean_config():
 @mock.patch('jenkins.get_response', mock_api_call)
 def test_read():
     jenkins.read_metrics(jenkins.read_config(mock_config))
+
+
+def test_get_auth_args():
+    module_config = jenkins.read_config(mock_config)
+    auth_args = jenkins.get_auth_args(module_config)
+    assert 'auth' not in auth_args
