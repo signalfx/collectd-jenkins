@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import httplib
+import http.client
 import json
 from time import time, sleep
 from subprocess import call
@@ -20,7 +20,7 @@ TIMEOUT_SECS = 60
 
 def get_metric_data():
     # Use httplib instead of requests so we don't have to install stuff with pip
-    conn = httplib.HTTPConnection("fake_sfx", 8080)
+    conn = http.client.HTTPConnection("fake_sfx", 8080)
     conn.request("GET", "/")
     resp = conn.getresponse()
     a = resp.read()
@@ -30,10 +30,10 @@ def get_metric_data():
 def wait_for_metrics_from_each_member():
     start = time()
     for member in JENKINS_INSTANCES:
-        print 'Waiting for metrics from member %s...' % (member,)
+        print('Waiting for metrics from member %s...' % (member,))
         eventually_true(lambda: any([member in m.get('plugin_instance').split(':')[0] for m in get_metric_data()]),
                         TIMEOUT_SECS - (time() - start))
-        print 'Found!'
+        print('Found!')
 
 
 def eventually_true(f, timeout_secs):
