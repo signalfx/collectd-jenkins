@@ -12,15 +12,6 @@ services:
       - master2603
       - master2463
 
-  collectdamazon2017:
-    build:
-      context: ..
-      dockerfile: integration-test/Dockerfile.collectd.amazon2017.03
-    depends_on:
-      - fake_sfx
-      - master2603
-      - master2463
-
   master2603:
     build:
       context: ..

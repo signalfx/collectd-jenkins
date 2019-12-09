@@ -11,7 +11,7 @@ printf "Running tests against python2.7\n"
 docker-compose run --rm test-jenkins
 status=$?
 
-#docker-compose down
+docker-compose down
 
 printf $status
 exit $status

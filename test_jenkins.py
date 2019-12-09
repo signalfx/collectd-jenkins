@@ -13,7 +13,7 @@ class MockCollectd(mock.MagicMock):
 
     @staticmethod
     def log(log_str):
-        print log_str
+        print(log_str)
 
     debug = log
     info = log
@@ -24,7 +24,7 @@ class MockCollectd(mock.MagicMock):
 def mock_api_call(url, api_type, module_config):
     parsed_url = url.split('/')
 
-    print parsed_url
+    print(parsed_url)
 
     if api_type == 'jenkins' and 'localhost' in parsed_url[-2]:
         return getattr(sample_responses, 'jobs')
