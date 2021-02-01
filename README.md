@@ -30,6 +30,7 @@ Optional configurations keys include:
 * Interval - Interval between metric calls. Default is 10s
 * Username - user id with access, if any. Username will require APIToken too
 * APIToken - API token from the system configuration in Jenkins. `Username > Configure > API Token > Show API Token`
+* Path - URL prefix to use in the HTTP request
 * EnhancedMetrics - Flag to specify whether advanced stats from the `/metrics/<MetricsKey>/metrics` endpoint are needed. Default is False
 * IncludeMetric - Advanced Metrics from the `/metrics/<MetricsKey>/metrics` endpoint can be included individually
 * ExcludeMetric - Advanced Metrics from the `/metrics/<MetricsKey>/metrics` endpoint can be excluded individually
