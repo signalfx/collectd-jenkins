@@ -159,6 +159,7 @@ def read_config(conf):
         "plugin_config": {},
         "username": None,
         "api_token": None,
+        "path": "",
         "opener": None,
         "metrics_key": None,
         "custom_dimensions": {},
@@ -174,7 +175,7 @@ def read_config(conf):
     testing = False
 
     required_keys = ("Host", "Port")
-    auth_keys = ("Username", "APIToken", "MetricsKey")
+    auth_keys = ("Username", "APIToken", "Path", "MetricsKey")
 
     for val in conf.children:
         if val.key in required_keys:
@@ -185,6 +186,8 @@ def read_config(conf):
             module_config["username"] = val.values[0]
         elif val.key in auth_keys and val.key == "APIToken" and val.values[0]:
             module_config["api_token"] = val.values[0]
+        elif val.key in auth_keys and val.key == "Path" and val.values[0]:
+            module_config["path"] = val.values[0]
         elif val.key in auth_keys and val.key == "MetricsKey" and val.values[0]:
             module_config["metrics_key"] = val.values[0]
         elif val.key == "Dimension":
@@ -230,10 +233,12 @@ def read_config(conf):
         module_config["plugin_config"]["Port"],
     )
 
-    module_config["base_url"] = "http://%s:%s/" % (
+    module_config["base_url"] = "http://%s:%s%s/" % (
         module_config["plugin_config"]["Host"],
         module_config["plugin_config"]["Port"],
+        module_config["path"],
     )
+    collectd.info("Using base_url %s" % module_config["base_url"])
 
     if module_config["ssl_keys"]["enabled"] or (
         "ssl_certificate" in module_config["ssl_keys"] and "ssl_keyfile" in module_config["ssl_keys"]
@@ -377,7 +382,7 @@ def read_and_post_job_metrics(module_config, url, job_name, last_timestamp):
 
 def parse_and_post_metrics(module_config, resp):
     """
-    Read resposne and dispatch dropwizard metrics
+    Read response and dispatch dropwizard metrics
     """
 
     for key in NODE_METRICS:
