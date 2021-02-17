@@ -273,17 +273,10 @@ def read_config(conf):
         # for testing purposes
         return module_config
 
-    def safe_read_metrics(module_config):
-        print "entered safe_read_metrics(..)"
-        try:
-            read_metrics(module_config)
-        except Exception, error:
-            print error
-
     if interval is not None:
-        collectd.register_read(safe_read_metrics, interval, data=module_config, name=module_config["member_id"])
+        collectd.register_read(read_metrics, interval, data=module_config, name=module_config["member_id"])
     else:
-        collectd.register_read(safe_read_metrics, data=module_config, name=module_config["member_id"])
+        collectd.register_read(read_metrics, data=module_config, name=module_config["member_id"])
 
 
 def str_to_bool(flag):
@@ -510,7 +503,6 @@ def read_metrics(module_config):
     metrics from all endpoints
     """
     collectd.debug("Executing read_metrics callback")
-    print "entered read_metrics(..)"
 
     alive = get_response(module_config["base_url"], "ping", module_config)
 
