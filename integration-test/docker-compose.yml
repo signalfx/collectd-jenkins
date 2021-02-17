@@ -15,7 +15,7 @@ services:
   master2603:
     build:
       context: ..
-      dockerfile: integration-test/Dockerfile.jenkins.2603
+      dockerfile: integration-test/Dockerfile.jenkins.lts
       args:
         PORT: 8000
     ports:
@@ -24,7 +24,7 @@ services:
   master2463:
     build:
       context: ..
-      dockerfile: integration-test/Dockerfile.jenkins.2463
+      dockerfile: integration-test/Dockerfile.jenkins.lts
       args:
         PORT: 8000
     ports:
