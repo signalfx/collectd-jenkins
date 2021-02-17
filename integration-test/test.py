@@ -33,6 +33,8 @@ def wait_for_metrics_from_each_member():
         print('Waiting for metrics from member %s...' % (member,))
         eventually_true(lambda: any([member in m.get('plugin_instance').split(':')[0] for m in get_metric_data()]),
                         TIMEOUT_SECS - (time() - start))
+        # eventually_true(lambda: any(["jenkins.job.duration" in m.get('type_instance') for m in get_metric_data()]),
+        #                 TIMEOUT_SECS - (time() - start))
         print('Found!')
 
 

@@ -1,44 +1,44 @@
 import time
 
-jobs = [
-	{
-		"_class": "hudson.model.FreeStyleProject",
-		"name": "Data1",
-		"url": "http://localhost:8080/job/Test/",
-		"color": "blue"
-	}
-]
+# jobs = [
+# 	{
+# 		"_class": "hudson.model.FreeStyleProject",
+# 		"name": "Data1",
+# 		"url": "http://localhost:8080/job/Test/",
+# 		"color": "blue"
+# 	}
+# ]
 
-Test = {
-	"builds": [
-				{
-					"_class": "hudson.model.FreeStyleBuild",
-					"number": 18,
-					"url": "http://localhost:8080/job/Test/Build2/"
-				},
-				{
-					"_class": "hudson.model.FreeStyleBuild",
-					"number": 17,
-					"url": "http://localhost:8080/job/Test/Build1/"
-				}
-			]
-}
+# Test = {
+# 	"builds": [
+# 				{
+# 					"_class": "hudson.model.FreeStyleBuild",
+# 					"number": 18,
+# 					"url": "http://localhost:8080/job/Test/Build2/"
+# 				},
+# 				{
+# 					"_class": "hudson.model.FreeStyleBuild",
+# 					"number": 17,
+# 					"url": "http://localhost:8080/job/Test/Build1/"
+# 				}
+# 			]
+# }
 
-Build2 = {
-		"building": "true",
-		"duration": 515,
-		"result": "",
-		"timestamp": int(time.time()*1000),
-		
-}
-
-Build1 = {
-		"building": "false",
-		"duration": 515,
-		"result": "SUCCESS",
-		"timestamp": int(time.time()*1000),
-		
-}
+# Build2 = {
+# 		"building": "true",
+# 		"duration": 515,
+# 		"result": "",
+# 		"timestamp": int(time.time()*1000),
+#
+# }
+#
+# Build1 = {
+# 		"building": "false",
+# 		"duration": 515,
+# 		"result": "SUCCESS",
+# 		"timestamp": int(time.time()*1000),
+#
+# }
 
 metrics = {
 	"gauges": {
@@ -157,7 +157,7 @@ healthcheck = {
 	}
 }
 
-computer = { 
+computer = {
 	"computer" :[
 					{
 						"_class": "hudson.model.Hudson$MasterComputer",
@@ -173,3 +173,75 @@ computer = {
 }
 
 ping = True
+
+job_tree = {
+    "_class": "hudson.model.Hudson",
+    "jobs": [
+        {
+            "_class": "com.cloudbees.hudson.plugins.folder.Folder",
+            "name": "emptyfolder",
+            "url": "http://localhost:8003/job/emptyfolder/",
+            "jobs": [
+
+            ]
+        },
+        {
+            "_class": "com.cloudbees.hudson.plugins.folder.Folder",
+            "name": "testfolder",
+            "url": "http://localhost:8003/job/testfolder/",
+            "jobs": [
+                {
+                    "_class": "com.cloudbees.hudson.plugins.folder.Folder",
+                    "name": "nestedfilder",
+                    "url": "http://localhost:8003/job/testfolder/job/nestedfolder/",
+                    "jobs": [
+                        {
+                            "_class": "hudson.model.FreeStyleProject",
+                            "name": "nestedfolderjob",
+                            "url": "http://localhost:8003/job/testfolder/job/nestedfolder/job/nestedfolderjob/"
+                        }
+                    ]
+                },
+                {
+                    "_class": "hudson.model.FreeStyleProject",
+                    "name": "testfolderjob",
+                    "url": "http://localhost:8003/job/testfolder/job/testfolderjob/"
+                }
+            ]
+        }
+    ]
+}
+
+testfolder_job_testfolderjob = {
+    "builds": [
+        {
+            "_class": "hudson.model.FreeStyleProject",
+            "number": 20,
+            "url": "http://localhost:8003/job/testfolder/job/testfolderjob/Build1/"
+        },
+    ]
+}
+
+testfolder_job_testfolderjob_20 = {
+    "building": "true",
+    "duration": 515,
+    "result": "",
+    "timestamp": int(time.time() * 1000),
+}
+
+testfolder_job_nestedfolder_job_nestedfolderjob = {
+    "builds": [
+        {
+            "_class": "hudson.model.FreeStyleProject",
+            "number": 21,
+            "url": "http://localhost:8003/job/testfolder/job/nestedfolder/job/nestedfolderjob/Build2/"
+        },
+    ]
+}
+
+testfolder_job_nestedfolder_job_nestedfolderjob_21 = {
+    "building": "true",
+    "duration": 515,
+    "result": "",
+    "timestamp": int(time.time() * 1000),
+}

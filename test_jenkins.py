@@ -24,14 +24,14 @@ class MockCollectd(mock.MagicMock):
 def mock_api_call(url, api_type, module_config):
     parsed_url = url.split('/')
 
-    print(parsed_url)
+    print("parsed_url=", parsed_url)
 
     if api_type == 'jenkins' and 'localhost' in parsed_url[-2]:
         return getattr(sample_responses, 'jobs')
     elif api_type == 'jenkins':
-        return getattr(sample_responses, parsed_url[-2])
-    elif 'job' in parsed_url[-3]:
-        return getattr(sample_responses, 'builds')
+        return getattr(sample_responses, "_".join(parsed_url[4:-1]))
+    elif api_type == "job_tree":
+        return getattr(sample_responses, 'job_tree')
     # one of the endpoints that the plugin needs
     return getattr(sample_responses, api_type)
 
