@@ -11,29 +11,35 @@ services:
       - fake_sfx
       - master2603
       - master2463
+    volumes:
+      - ./20-jenkins-test.conf:/etc/collectd/managed_config/20-jenkins-test.conf
+      - ../jenkins.py:/opt/collectd-jenkins/jenkins.py
 
   master2603:
     build:
       context: ..
-      dockerfile: integration-test/Dockerfile.jenkins.2603
+      dockerfile: integration-test/Dockerfile.jenkins.lts
       args:
         PORT: 8000
     ports:
-      - 8000
+      - "8003:8000"
 
   master2463:
     build:
       context: ..
-      dockerfile: integration-test/Dockerfile.jenkins.2463
+      dockerfile: integration-test/Dockerfile.jenkins.lts
       args:
         PORT: 8000
     ports:
-      - 8000
+      - "8004:8000"
 
   fake_sfx:
     build:
       context: .
       dockerfile: Dockerfile.sink
+    ports:
+      - "80"
+      - "8080:8080"
 
   test-jenkins:
     build:
