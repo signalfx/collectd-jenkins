@@ -1,6 +1,6 @@
-FROM jenkins:%%%VER%%%
+FROM jenkins/jenkins:%%%VER%%%
 COPY integration-test/metrics.groovy /usr/share/jenkins/ref/init.groovy.d/metrics.groovy
-RUN /usr/local/bin/install-plugins.sh docker-slaves metrics
+RUN /usr/local/bin/install-plugins.sh docker-slaves metrics cloudbees-folder
 
 ARG PORT
 

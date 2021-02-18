@@ -9,22 +9,22 @@ services:
       SF_INGEST_HOST: fake_sfx
     depends_on:
       - fake_sfx
-      - master2603
-      - master2463
+      - jenkins0
+      - jenkins1
 
-  master2603:
+  jenkins0:
     build:
       context: ..
-      dockerfile: integration-test/Dockerfile.jenkins.2603
+      dockerfile: integration-test/Dockerfile.jenkins0
       args:
         PORT: 8000
     ports:
       - 8000
 
-  master2463:
+  jenkins1:
     build:
       context: ..
-      dockerfile: integration-test/Dockerfile.jenkins.2463
+      dockerfile: integration-test/Dockerfile.jenkins1
       args:
         PORT: 8000
     ports:
