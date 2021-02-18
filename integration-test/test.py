@@ -12,8 +12,8 @@ from subprocess import call
 # integration tests if so desired.
 
 JENKINS_INSTANCES = [
-    'master2603',
-    'master2463'
+    'jenkins0',
+    'jenkins1'
 ]
 TIMEOUT_SECS = 60
 
