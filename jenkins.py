@@ -28,7 +28,7 @@ def build_job_folding_exp(depth):
     Builds an expression to get all folding jobs within specified depth
     """
     exp = ""
-    for _ in xrange(depth):
+    for _ in range(depth):
         exp = "[jobs" + exp + ",name,url]"
     return exp
 
@@ -416,7 +416,6 @@ def parse_and_post_metrics(module_config, resp):
             if (
                 metric in module_config["exclude_optional_metrics"]
                 or type(resp[metric]["value"]) is str
-                or type(resp[metric]["value"]) is unicode
                 or type(resp[metric]["value"]) is bytes
                 or type(resp[metric]["value"]) is list
             ):
@@ -428,7 +427,6 @@ def parse_and_post_metrics(module_config, resp):
         for metric in module_config["include_optional_metrics"]:
             if metric in resp and not (
                 type(resp[metric]["value"]) is str
-                or type(resp[metric]["value"]) is unicode
                 or type(resp[metric]["value"]) is bytes
                 or type(resp[metric]["value"]) is list
             ):
