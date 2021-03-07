@@ -543,7 +543,8 @@ def read_metrics(module_config):
             else:
                 last_timestamp = int(time.time() * 1000) - (60 * 1000)
                 module_config["jobs_last_timestamp"][job["name"]] = last_timestamp
-            read_and_post_job_metrics(module_config, job["url"], job["name"], last_timestamp)
+            job_url = module_config["base_url"][:-1] + urllib.parse.urlparse(job["url"]).path
+            read_and_post_job_metrics(module_config, job_url, job["name"], last_timestamp)
 
 
 def init():
