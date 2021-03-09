@@ -35,6 +35,7 @@ Optional configurations keys include:
 * IncludeMetric - Advanced Metrics from the `/metrics/<MetricsKey>/metrics` endpoint can be included individually
 * ExcludeMetric - Advanced Metrics from the `/metrics/<MetricsKey>/metrics` endpoint can be excluded individually
 * Dimension - Add extra dimensions to your metrics
+* ExcludeJobMetrics - Flag to specify whether to collect extra job metrics from the Jenkins `/json/api`.
 
 ### SSL/TLS
 
