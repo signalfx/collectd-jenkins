@@ -185,6 +185,7 @@ def read_config(conf):
         "http_timeout": DEFAULT_API_TIMEOUT,
         "jobs_last_timestamp": {},
         "ssl_keys": {"enabled": False, "ssl_cert_validation": True},
+        "exclude_job_metrics": False,
     }
 
     interval = None
@@ -217,6 +218,8 @@ def read_config(conf):
             module_config["include_optional_metrics"].add(val.values[0])
         elif val.key == "ExcludeMetric" and val.values[0] and val.values[0] not in NODE_METRICS:
             module_config["exclude_optional_metrics"].add(val.values[0])
+        elif val.key == "ExcludeJobMetrics" and val.values[0]:
+            module_config["exclude_job_metrics"] = str_to_bool(val.values[0])
         elif val.key == "ssl_enabled" and val.values[0]:
             module_config["ssl_keys"]["enabled"] = str_to_bool(val.values[0])
         elif val.key == "ssl_keyfile" and val.values[0]:
@@ -524,6 +527,9 @@ def read_metrics(module_config):
     if resp_obj is not None:
         parse_and_post_healthcheck(module_config, resp_obj)
 
+    if module_config["exclude_job_metrics"]:
+        return
+
     resp_obj = get_response(module_config["base_url"], "job_tree", module_config)
 
     if resp_obj is not None:
@@ -543,7 +549,8 @@ def read_metrics(module_config):
             else:
                 last_timestamp = int(time.time() * 1000) - (60 * 1000)
                 module_config["jobs_last_timestamp"][job["name"]] = last_timestamp
-            read_and_post_job_metrics(module_config, job["url"], job["name"], last_timestamp)
+            job_url = module_config["base_url"][:-1] + urllib.parse.urlparse(job["url"]).path
+            read_and_post_job_metrics(module_config, job_url, job["name"], last_timestamp)
 
 
 def init():
