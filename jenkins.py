@@ -5,6 +5,7 @@ import collections
 import json
 import pprint
 import time
+import sys
 
 import requests
 import urllib3
@@ -14,6 +15,10 @@ from six.moves import urllib
 from six.moves.urllib.parse import quote as urllib_quote
 
 import collectd
+
+# unicode does not exist in python 3
+if sys.version_info[0] >= 3:
+    unicode = str
 
 # Prevents spamming when not validating certificates.
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -419,6 +424,7 @@ def parse_and_post_metrics(module_config, resp):
             if (
                 metric in module_config["exclude_optional_metrics"]
                 or type(resp[metric]["value"]) is str
+                or type(resp[metric]["value"]) is unicode
                 or type(resp[metric]["value"]) is bytes
                 or type(resp[metric]["value"]) is list
             ):
@@ -430,6 +436,7 @@ def parse_and_post_metrics(module_config, resp):
         for metric in module_config["include_optional_metrics"]:
             if metric in resp and not (
                 type(resp[metric]["value"]) is str
+                or type(resp[metric]["value"]) is unicode
                 or type(resp[metric]["value"]) is bytes
                 or type(resp[metric]["value"]) is list
             ):
