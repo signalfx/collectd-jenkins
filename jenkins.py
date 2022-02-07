@@ -266,7 +266,7 @@ def read_config(conf):
 
     if module_config["username"] is None and module_config["api_token"] is None:
         module_config["username"] = module_config["api_token"] = ""
-    collectd.info("Using username '%s' and api_token '%s' " % (module_config["username"], module_config["api_token"]))
+    collectd.info("Using username '%s'" % module_config["username"])
 
     module_config["auth_args"] = get_auth_args(module_config)
 
