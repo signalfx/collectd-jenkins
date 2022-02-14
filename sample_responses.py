@@ -40,6 +40,12 @@ job_tree = {
       "name": "Data1",
       "url": "http://localhost:8080/job/testjob/",
       "color": "blue"
+    },
+    {
+      "_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+      "name": "pipeline ` job",
+      "url": "http://127.0.0.1:8080/jenkins/job/pipeline%20%60%20%20job/",
+      "color": "aborted"
     }
   ]
 }

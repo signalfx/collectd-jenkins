@@ -12,6 +12,7 @@ from requests import HTTPError, RequestException
 from requests.auth import HTTPBasicAuth
 from six.moves import urllib
 from six.moves.urllib.parse import quote as urllib_quote
+from six.moves.urllib.parse import unquote as urllib_unquote
 
 import collectd
 
@@ -549,7 +550,13 @@ def read_metrics(module_config):
             else:
                 last_timestamp = int(time.time() * 1000) - (60 * 1000)
                 module_config["jobs_last_timestamp"][job["name"]] = last_timestamp
-            job_url = module_config["base_url"][:-1] + urllib.parse.urlparse(job["url"]).path
+            # If the Jenkins instance is configured with Jenkins URL, the Job URL will include the prefix
+            # Latest Jenkins versions quote job urls, unquoting as the _api_call func quotes urls
+            job_path = urllib.parse.urlparse(job["url"]).path
+            if module_config["path"] and job_path.startswith(module_config["path"]):
+                job_url = urllib_unquote(job["url"])
+            else:
+                job_url = module_config["base_url"][:-1] + urllib_unquote(job_path)
             read_and_post_job_metrics(module_config, job_url, job["name"], last_timestamp)
 
 
