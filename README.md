@@ -53,7 +53,7 @@ Provide a custom file that lists trusted CA certificates, required when keyfile 
 
 * ssl_ca_certs - path to file
 
-From `/metrics/<MetricsKey>/metrics` only the metrics inside `gauges` key are representable, if the value is a number. Metrics of type `histograms`, `meter` and `timer` will be skipped over. Check out `https://wiki.jenkins.io/display/JENKINS/Metrics+Plugin` for description of the metrics.
+From `/metrics/<MetricsKey>/metrics` only the metrics inside the `gauges` and `counters` keys are representable, if the value is a number. Metrics of type `histograms`, `meter` and `timer` will be skipped over. Check out `https://wiki.jenkins.io/display/JENKINS/Metrics+Plugin` for description of the metrics.
 
 Note that multiple Jenkins instances can be configured in the same file.
 
