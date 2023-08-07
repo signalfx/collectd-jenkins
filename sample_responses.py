@@ -162,6 +162,9 @@ metrics = {
 		"jenkins.queue.stuck.value": {
 			"value": 0
 		},
+		"jenkins.versions.core": {
+			"value": "2.277.4"
+		},
 		"system.cpu.load": {
 			"value": 1.37548828125
 		},
