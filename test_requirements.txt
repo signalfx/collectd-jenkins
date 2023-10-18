@@ -3,4 +3,4 @@ pytest
 mock
 requests
 six
-urllib3==1.26.6
+urllib3==1.26.18
