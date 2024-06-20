@@ -399,11 +399,7 @@ def read_and_post_job_metrics(module_config, job_url, job_name, last_timestamp):
                     break
 
 
-def parse_and_post_metrics(module_config, resp):
-    """
-    Read response and dispatch dropwizard metrics
-    """
-
+def parse_and_post_node_metrics(module_config, resp):
     for key in NODE_METRICS:
         if key in resp:
             prepare_and_dispatch_metric(
@@ -412,6 +408,12 @@ def parse_and_post_metrics(module_config, resp):
         else:
             prepare_and_dispatch_metric(module_config, NODE_METRICS[key].name, 0, NODE_METRICS[key].type)
 
+
+def parse_and_post_metrics(module_config, resp, value_property):
+    """
+    Read response and dispatch dropwizard metrics
+    """
+
     # if the bool is true, then exclude metrics that are not required
     if module_config["enhanced_metrics"]:
         for metric in resp:
@@ -419,22 +421,22 @@ def parse_and_post_metrics(module_config, resp):
             # metrics contains string and list as well which are not valid, hence skip
             if (
                 metric in module_config["exclude_optional_metrics"]
-                or type(resp[metric]["value"]) is str
-                or type(resp[metric]["value"]) is bytes
-                or type(resp[metric]["value"]) is list
+                or type(resp[metric][value_property]) is str
+                or type(resp[metric][value_property]) is bytes
+                or type(resp[metric][value_property]) is list
             ):
                 continue
 
-            prepare_and_dispatch_metric(module_config, metric, resp[metric]["value"], "gauge")
+            prepare_and_dispatch_metric(module_config, metric, resp[metric][value_property], "gauge")
     else:
         # include only the required metrics
         for metric in module_config["include_optional_metrics"]:
             if metric in resp and not (
-                type(resp[metric]["value"]) is str
-                or type(resp[metric]["value"]) is bytes
-                or type(resp[metric]["value"]) is list
+                type(resp[metric][value_property]) is str
+                or type(resp[metric][value_property]) is bytes
+                or type(resp[metric][value_property]) is list
             ):
-                prepare_and_dispatch_metric(module_config, metric, resp[metric]["value"], "gauge")
+                prepare_and_dispatch_metric(module_config, metric, resp[metric][value_property], "gauge")
 
 
 def parse_and_post_healthcheck(module_config, resp):
@@ -521,7 +523,8 @@ def read_metrics(module_config):
     resp_obj = get_response(module_config["base_url"], "metrics", module_config)
 
     if resp_obj is not None:
-        parse_and_post_metrics(module_config, resp_obj["gauges"])
+        parse_and_post_metrics(module_config, resp_obj["gauges"], "value")
+        parse_and_post_metrics(module_config, resp_obj["counters"], "count")
 
     resp_obj = get_response(module_config["base_url"], "healthcheck", module_config)
 
