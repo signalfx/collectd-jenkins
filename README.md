@@ -1,3 +1,7 @@
+> # :warning: End of Support (EoS) Notice
+> 
+> This plugin is deprecated and no longer maintained.
+
 >ℹ️&nbsp;&nbsp;SignalFx was acquired by Splunk in October 2019. See [Splunk SignalFx](https://www.splunk.com/en_us/investor-relations/acquisitions/signalfx.html) for more information.
 
 # collectd jenkins Plugin
