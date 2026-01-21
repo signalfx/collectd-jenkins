@@ -213,7 +213,15 @@ metrics = {
 		"vm.waiting.count": {
 			"value": 14
 		}
-	}
+	},
+	"counters": {
+        "http.activeRequests": {
+            "count": 1
+        },
+        "jenkins_bfa.category.build-failure": {
+            "count": 8
+        }
+    }
 }
 
 healthcheck = {
